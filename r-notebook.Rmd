@@ -1,6 +1,6 @@
 ---
 title: "R Notebook for Climate Change Trends"
-output: html_notebook
+output: github_document
 ---
 
 Loading the libraries requied to analyze the datasets
