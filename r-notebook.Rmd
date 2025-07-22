@@ -1,0 +1,54 @@
+---
+title: "R Notebook for Climate Change Trends"
+output: html_notebook
+---
+
+Loading the libraries requied to analyze the datasets
+
+```{r}
+#loading the required packages
+library(tidyverse)
+library(corrplot)
+library(VIM)
+library(Hmisc)
+library(psych)
+library(ggplot2)
+library(dplyr)
+library(plotly)
+library(GGally)
+library(mice)
+library(readr)
+
+```
+
+Loading the datasets
+
+```{r}
+#loading datasets
+df1 <- read_csv("global-temp-annual.csv")
+df2 <- read_csv("owid-co2-data.csv")
+
+```
+
+Summary of dataset
+
+```{r}
+#summary of datasets
+cat("Dataset 1 Dimensions:", dim(df1), "\n")
+cat("Dataset 2 Dimensions:", dim(df2), "\n")
+cat(strrep("-", 50), "\n")
+cat("Summary of Dataset 1: \n")
+summary(df1)
+cat(strrep("-", 50), "\n")
+cat("Summary of Dataset 2: \n")
+summary(df2)
+cat(strrep("-", 50), "\n")
+```
+
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
