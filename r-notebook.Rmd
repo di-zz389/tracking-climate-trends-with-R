@@ -45,6 +45,25 @@ summary(df2)
 cat(strrep("-", 50), "\n")
 ```
 
+Examining Datasets
+
+```{r}
+
+cat("Dataset 1 - First 6 rows:\n")
+head(df1)
+cat(strrep("-", 50), "\n")
+cat("Dataset 2 - First 6 rows:\n")
+head(df2)
+cat(strrep("-", 50), "\n")
+
+cat("Dataset 1 data types:\n")
+sapply(df1, class)
+cat(strrep("-", 50), "\n")
+cat("Dataset 2 data types:\n")
+sapply(df2, class)
+cat(strrep("-", 50), "\n")
+
+```
 
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
