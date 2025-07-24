@@ -18,6 +18,7 @@ library(plotly)
 library(GGally)
 library(mice)
 library(readr)
+library(patchwork)
 
 ```
 
@@ -63,5 +64,144 @@ cat("Dataset 2 data types:\n")
 sapply(df2, class)
 cat(strrep("-", 50), "\n")
 
+```
+
+Checking for Missing Values
+
+```{r}
+#analysing missing values
+missing_df1 <- df1 %>%
+  summarise_all(~sum(is.na(.))) %>%
+  gather(key = "Variable", value = "Missing_Count") %>%
+  mutate(
+    Missing_Percentage = (Missing_Count / nrow(df1)) * 100,
+    Present_Count = nrow(df1) - Missing_Count,
+    Present_Percentage = 100 - Missing_Percentage
+  ) %>%
+  arrange(desc(Missing_Count))
+
+print("Dataset 1 - Missing Values:")
+print(missing_df1)
+
+missing_df2 <- df2 %>%
+  summarise_all(~sum(is.na(.))) %>%
+  gather(key = "Variable", value = "Missing_Count") %>%
+  mutate(
+    Missing_Percentage = (Missing_Count / nrow(df2)) * 100,
+    Present_Count = nrow(df2) - Missing_Count,
+    Present_Percentage = 100 - Missing_Percentage
+  ) %>%
+  arrange(desc(Missing_Count))
+
+print("Dataset 2 - Missing Values:")
+print(missing_df2)
+
+#visualising missing data patterns
+p1 <- ggplot(missing_df1, aes(x = reorder(Variable, Missing_Percentage))) +
+  geom_col(aes(y = Present_Percentage), fill = "#17becf", alpha = 0.8) +
+  geom_col(aes(y = Missing_Percentage), fill = "#ff7f0e", alpha = 0.9) +
+  coord_flip() +
+  labs(
+    title = "Missing Data Pattern - Dataset 1",
+    subtitle = "Orange = Missing, Blue = Present",
+    x = "Variables",
+    y = "Percentage",
+    caption = paste("Total observations:", nrow(df1))
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 11, color = "gray60"),
+    axis.text = element_text(size = 10),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA)
+  ) +
+  scale_y_continuous(labels = function(x) paste0(x, "%"))
+
+print(p1)
+
+
+p2<- ggplot(missing_df2, aes(x = reorder(Variable, Missing_Percentage))) +
+  geom_col(aes(y = Present_Percentage, text = paste("Variable:", Variable, "<br>Present:", round(Present_Percentage, 1), "%")), 
+           fill = "#17becf", alpha = 0.8) +
+  geom_col(aes(y = Missing_Percentage, text = paste("Variable:", Variable, "<br>Missing:", round(Missing_Percentage, 1), "%")), 
+           fill = "#ff7f0e", alpha = 0.9) +
+  coord_flip() +
+  labs(title = "Missing Data Pattern - Dataset 2",
+       x = "Variables", y = "Percentage") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank())
+ggplotly(p2, tooltip = "text")
+
+```
+
+Identifying duplicates and unique values in Data
+
+```{r}
+cat("Dataset 1 duplicates:", sum(duplicated(df1)), "\n")
+cat("Dataset 2 duplicates:", sum(duplicated(df2)), "\n")
+cat(strrep("-", 50), "\n")
+
+check_categorical <- function(df, dataset_name) {
+  char_cols <- sapply(df, function(x) is.character(x) | is.factor(x))
+  char_col_names <- names(df)[char_cols]
+  
+  for (col in char_col_names) {
+    unique_count <- length(unique(df[[col]]))
+    cat(sprintf("%s - %s: %d unique values\n", dataset_name, col, unique_count))
+    
+    if (unique_count <= 20) {
+      print(table(df[[col]], useNA = "ifany"))
+      cat("\n")
+    }
+  }
+}
+
+check_categorical(df1, "Dataset 1")
+check_categorical(df2, "Dataset 2")
+cat(strrep("-", 50), "\n")
+
+```
+
+Handling Missing Values
+
+```{r}
+handle_missing_values <- function(df, strategy = "auto") {
+  df_clean <- df
+
+  missing_pct <- df %>%
+    summarise_all(~sum(is.na(.)) / length(.) * 100)
+  
+  #remove columns with >50% missing values
+  high_missing_cols <- names(missing_pct)[missing_pct > 50]
+  if (length(high_missing_cols) > 0) {
+    cat("Removing columns with >50% missing values:", paste(high_missing_cols, collapse = ", "), "\n")
+    df_clean <- df_clean %>% select(-all_of(high_missing_cols))
+  }
+  
+  #handling remaining missing values
+  for (col in names(df_clean)) {
+    if (sum(is.na(df_clean[[col]])) > 0) {
+      if (is.numeric(df_clean[[col]])) {
+        #using median for numeric columns
+        df_clean[[col]][is.na(df_clean[[col]])] <- median(df_clean[[col]], na.rm = TRUE)
+      } else {
+        #using mode for categorical columns
+        mode_val <- names(sort(table(df_clean[[col]]), decreasing = TRUE))[1]
+        df_clean[[col]][is.na(df_clean[[col]])] <- mode_val
+      }
+    }
+  }
+  
+  return(df_clean)
+}
+
+df1_clean <- handle_missing_values(df1)
+df2_clean <- handle_missing_values(df2)
+
+cat(strrep("-", 50), "\n")
+cat("Dataset 1: Rows", nrow(df1), "->", nrow(df1_clean), "after cleaning\n")
+cat(strrep("-", 50), "\n")
+cat("Dataset 2: Rows", nrow(df2), "->", nrow(df2_clean), "after cleaning\n")
 ```
 
