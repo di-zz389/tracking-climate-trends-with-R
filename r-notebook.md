@@ -114,6 +114,7 @@ library(mice)
 
 ``` r
 library(readr)
+library(patchwork)
 ```
 
 Loading the datasets
@@ -696,14 +697,447 @@ cat(strrep("-", 50), "\n")
 
     ## --------------------------------------------------
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or
-by pressing *Ctrl+Alt+I*.
+Checking for Missing Values
 
-When you save the notebook, an HTML file containing the code and output
-will be saved alongside it (click the *Preview* button or press
-*Ctrl+Shift+K* to preview the HTML file).
+``` r
+#analysing missing values
+missing_df1 <- df1 %>%
+  summarise_all(~sum(is.na(.))) %>%
+  gather(key = "Variable", value = "Missing_Count") %>%
+  mutate(
+    Missing_Percentage = (Missing_Count / nrow(df1)) * 100,
+    Present_Count = nrow(df1) - Missing_Count,
+    Present_Percentage = 100 - Missing_Percentage
+  ) %>%
+  arrange(desc(Missing_Count))
 
-The preview shows you a rendered HTML copy of the contents of the
-editor. Consequently, unlike *Knit*, *Preview* does not run any R code
-chunks. Instead, the output of the chunk when it was last run in the
-editor is displayed.
+print("Dataset 1 - Missing Values:")
+```
+
+    ## [1] "Dataset 1 - Missing Values:"
+
+``` r
+print(missing_df1)
+```
+
+    ## # A tibble: 8 × 5
+    ##   Variable     Missing_Count Missing_Percentage Present_Count Present_Percentage
+    ##   <chr>                <int>              <dbl>         <int>              <dbl>
+    ## 1 Band 1                  20               14.7           116               85.3
+    ## 2 Band 2                  20               14.7           116               85.3
+    ## 3 Band 3                  20               14.7           116               85.3
+    ## 4 Year                     0                0             136              100  
+    ## 5 Land                     0                0             136              100  
+    ## 6 Land and Oc…             0                0             136              100  
+    ## 7 N Hem                    0                0             136              100  
+    ## 8 S Hem                    0                0             136              100
+
+``` r
+missing_df2 <- df2 %>%
+  summarise_all(~sum(is.na(.))) %>%
+  gather(key = "Variable", value = "Missing_Count") %>%
+  mutate(
+    Missing_Percentage = (Missing_Count / nrow(df2)) * 100,
+    Present_Count = nrow(df2) - Missing_Count,
+    Present_Percentage = 100 - Missing_Percentage
+  ) %>%
+  arrange(desc(Missing_Count))
+
+print("Dataset 2 - Missing Values:")
+```
+
+    ## [1] "Dataset 2 - Missing Values:"
+
+``` r
+print(missing_df2)
+```
+
+    ## # A tibble: 79 × 5
+    ##    Variable    Missing_Count Missing_Percentage Present_Count Present_Percentage
+    ##    <chr>               <int>              <dbl>         <int>              <dbl>
+    ##  1 share_glob…         48083               95.8          2108               4.20
+    ##  2 share_glob…         48083               95.8          2108               4.20
+    ##  3 other_co2_…         47717               95.1          2474               4.93
+    ##  4 cumulative…         46989               93.6          3202               6.38
+    ##  5 other_indu…         46989               93.6          3202               6.38
+    ##  6 consumptio…         45747               91.1          4444               8.85
+    ##  7 consumptio…         45689               91.0          4502               8.97
+    ##  8 trade_co2           45656               91.0          4535               9.04
+    ##  9 trade_co2_…         45656               91.0          4535               9.04
+    ## 10 consumptio…         45325               90.3          4866               9.69
+    ## # ℹ 69 more rows
+
+``` r
+#visualising missing data patterns
+p1 <- ggplot(missing_df1, aes(x = reorder(Variable, Missing_Percentage))) +
+  geom_col(aes(y = Present_Percentage), fill = "#17becf", alpha = 0.8) +
+  geom_col(aes(y = Missing_Percentage), fill = "#ff7f0e", alpha = 0.9) +
+  coord_flip() +
+  labs(
+    title = "Missing Data Pattern - Dataset 1",
+    subtitle = "Orange = Missing, Blue = Present",
+    x = "Variables",
+    y = "Percentage",
+    caption = paste("Total observations:", nrow(df1))
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    plot.subtitle = element_text(size = 11, color = "gray60"),
+    axis.text = element_text(size = 10),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA)
+  ) +
+  scale_y_continuous(labels = function(x) paste0(x, "%"))
+
+print(p1)
+```
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+``` r
+p2<- ggplot(missing_df2, aes(x = reorder(Variable, Missing_Percentage))) +
+  geom_col(aes(y = Present_Percentage, text = paste("Variable:", Variable, "<br>Present:", round(Present_Percentage, 1), "%")), 
+           fill = "#17becf", alpha = 0.8) +
+  geom_col(aes(y = Missing_Percentage, text = paste("Variable:", Variable, "<br>Missing:", round(Missing_Percentage, 1), "%")), 
+           fill = "#ff7f0e", alpha = 0.9) +
+  coord_flip() +
+  labs(title = "Missing Data Pattern - Dataset 2",
+       x = "Variables", y = "Percentage") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank())
+```
+
+    ## Warning in geom_col(aes(y = Present_Percentage, text = paste("Variable:", :
+    ## Ignoring unknown aesthetics: text
+
+    ## Warning in geom_col(aes(y = Missing_Percentage, text = paste("Variable:", :
+    ## Ignoring unknown aesthetics: text
+
+``` r
+ggplotly(p2, tooltip = "text")
+```
+
+    ## file:////tmp/RtmpFH79uH/filedf6134171626/widgetdf612dc9d7aa.html screenshot completed
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
+
+Identifying duplicates and unique values in Data
+
+``` r
+cat("Dataset 1 duplicates:", sum(duplicated(df1)), "\n")
+```
+
+    ## Dataset 1 duplicates: 0
+
+``` r
+cat("Dataset 2 duplicates:", sum(duplicated(df2)), "\n")
+```
+
+    ## Dataset 2 duplicates: 0
+
+``` r
+cat(strrep("-", 50), "\n")
+```
+
+    ## --------------------------------------------------
+
+``` r
+check_categorical <- function(df, dataset_name) {
+  char_cols <- sapply(df, function(x) is.character(x) | is.factor(x))
+  char_col_names <- names(df)[char_cols]
+  
+  for (col in char_col_names) {
+    unique_count <- length(unique(df[[col]]))
+    cat(sprintf("%s - %s: %d unique values\n", dataset_name, col, unique_count))
+    
+    if (unique_count <= 20) {
+      print(table(df[[col]], useNA = "ifany"))
+      cat("\n")
+    }
+  }
+}
+
+check_categorical(df1, "Dataset 1")
+check_categorical(df2, "Dataset 2")
+```
+
+    ## Dataset 2 - country: 255 unique values
+    ## Dataset 2 - iso_code: 219 unique values
+
+``` r
+cat(strrep("-", 50), "\n")
+```
+
+    ## --------------------------------------------------
+
+Handling Missing Values
+
+``` r
+handle_missing_values <- function(df, strategy = "auto") {
+  df_clean <- df
+
+  missing_pct <- df %>%
+    summarise_all(~sum(is.na(.)) / length(.) * 100)
+  
+  #remove columns with >50% missing values
+  high_missing_cols <- names(missing_pct)[missing_pct > 50]
+  if (length(high_missing_cols) > 0) {
+    cat("Removing columns with >50% missing values:", paste(high_missing_cols, collapse = ", "), "\n")
+    df_clean <- df_clean %>% select(-all_of(high_missing_cols))
+  }
+  
+  #handling remaining missing values
+  for (col in names(df_clean)) {
+    if (sum(is.na(df_clean[[col]])) > 0) {
+      if (is.numeric(df_clean[[col]])) {
+        #using median for numeric columns
+        df_clean[[col]][is.na(df_clean[[col]])] <- median(df_clean[[col]], na.rm = TRUE)
+      } else {
+        #using mode for categorical columns
+        mode_val <- names(sort(table(df_clean[[col]]), decreasing = TRUE))[1]
+        df_clean[[col]][is.na(df_clean[[col]])] <- mode_val
+      }
+    }
+  }
+  
+  return(df_clean)
+}
+
+df1_clean <- handle_missing_values(df1)
+df2_clean <- handle_missing_values(df2)
+```
+
+    ## Removing columns with >50% missing values: gdp, co2_including_luc, co2_including_luc_growth_abs, co2_including_luc_growth_prct, co2_including_luc_per_capita, co2_including_luc_per_gdp, co2_including_luc_per_unit_energy, co2_per_gdp, co2_per_unit_energy, coal_co2, coal_co2_per_capita, consumption_co2, consumption_co2_per_capita, consumption_co2_per_gdp, cumulative_co2_including_luc, cumulative_coal_co2, cumulative_flaring_co2, cumulative_gas_co2, cumulative_other_co2, energy_per_capita, energy_per_gdp, flaring_co2, flaring_co2_per_capita, gas_co2, gas_co2_per_capita, oil_co2_per_capita, other_co2_per_capita, other_industry_co2, primary_energy_consumption, share_global_cement_co2, share_global_co2_including_luc, share_global_coal_co2, share_global_cumulative_cement_co2, share_global_cumulative_co2_including_luc, share_global_cumulative_coal_co2, share_global_cumulative_flaring_co2, share_global_cumulative_gas_co2, share_global_cumulative_oil_co2, share_global_cumulative_other_co2, share_global_flaring_co2, share_global_gas_co2, share_global_oil_co2, share_global_other_co2, trade_co2, trade_co2_share
+
+``` r
+cat(strrep("-", 50), "\n")
+```
+
+    ## --------------------------------------------------
+
+``` r
+cat("Dataset 1: Rows", nrow(df1), "->", nrow(df1_clean), "after cleaning\n")
+```
+
+    ## Dataset 1: Rows 136 -> 136 after cleaning
+
+``` r
+cat(strrep("-", 50), "\n")
+```
+
+    ## --------------------------------------------------
+
+``` r
+cat("Dataset 2: Rows", nrow(df2), "->", nrow(df2_clean), "after cleaning\n")
+```
+
+    ## Dataset 2: Rows 50191 -> 50191 after cleaning
+
+Univariate Analysis
+
+For numeric columns, we will use shapiro.test() to test if the data
+follows normal distribution. Upon calculating the p-value:
+
+- If p \> 0.05: Data is likely normally distributed
+- If p ≤ 0.05: Data significantly deviates from normal distribution
+
+``` r
+create_univariate_plots <- function(df, dataset_name) {
+  numeric_cols <- names(df)[sapply(df, is.numeric)]
+  categorical_cols <- names(df)[sapply(df, is.factor)]
+
+  for (col in numeric_cols) {
+    p1 <- ggplot(df, aes(x = .data[[col]])) +
+      geom_histogram(bins = 30, fill = "lightblue", alpha = 0.7) +
+      ggtitle(paste("Distribution of", col)) +
+      theme_minimal()
+    
+    p2 <- ggplot(df, aes(y = .data[[col]])) +
+      geom_boxplot(fill = "lightgreen", alpha = 0.7) +
+      ggtitle(paste("Boxplot of", col)) +
+      theme_minimal()
+
+    print(p1)
+    print(p2)
+
+    shapiro_test <- shapiro.test(sample(df[[col]], min(5000, length(df[[col]]))))
+    cat(sprintf("%s - Shapiro-Wilk normality test p-value: %.6f\n", col, shapiro_test$p.value))
+  }
+
+  for (col in categorical_cols) {
+    p <- ggplot(df, aes(x = .data[[col]])) +
+      geom_bar(fill = "coral", alpha = 0.7) +
+      ggtitle(paste("Distribution of", col)) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    print(p)
+  }
+}
+
+create_univariate_plots(df1_clean, "Dataset 1")
+```
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
+
+    ## Year - Shapiro-Wilk normality test p-value: 0.000183
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-3.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-4.png)<!-- -->
+
+    ## Land - Shapiro-Wilk normality test p-value: 0.000005
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-5.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-6.png)<!-- -->
+
+    ## Land and Ocean - Shapiro-Wilk normality test p-value: 0.000003
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-7.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-8.png)<!-- -->
+
+    ## N Hem - Shapiro-Wilk normality test p-value: 0.000004
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-9.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-10.png)<!-- -->
+
+    ## S Hem - Shapiro-Wilk normality test p-value: 0.000002
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-11.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-12.png)<!-- -->
+
+    ## Band 1 - Shapiro-Wilk normality test p-value: 0.000001
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-13.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-14.png)<!-- -->
+
+    ## Band 2 - Shapiro-Wilk normality test p-value: 0.032602
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-15.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-16.png)<!-- -->
+
+    ## Band 3 - Shapiro-Wilk normality test p-value: 0.000054
+
+``` r
+create_univariate_plots(df2_clean, "Dataset 2")
+```
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-17.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-18.png)<!-- -->
+
+    ## year - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-19.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-20.png)<!-- -->
+
+    ## population - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-21.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-22.png)<!-- -->
+
+    ## cement_co2 - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-23.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-24.png)<!-- -->
+
+    ## cement_co2_per_capita - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-25.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-26.png)<!-- -->
+
+    ## co2 - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-27.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-28.png)<!-- -->
+
+    ## co2_growth_abs - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-29.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-30.png)<!-- -->
+
+    ## co2_growth_prct - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-31.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-32.png)<!-- -->
+
+    ## co2_per_capita - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-33.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-34.png)<!-- -->
+
+    ## cumulative_cement_co2 - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-35.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-36.png)<!-- -->
+
+    ## cumulative_co2 - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-37.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-38.png)<!-- -->
+
+    ## cumulative_luc_co2 - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-39.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-40.png)<!-- -->
+
+    ## cumulative_oil_co2 - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-41.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-42.png)<!-- -->
+
+    ## ghg_excluding_lucf_per_capita - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-43.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-44.png)<!-- -->
+
+    ## ghg_per_capita - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-45.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-46.png)<!-- -->
+
+    ## land_use_change_co2 - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-47.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-48.png)<!-- -->
+
+    ## land_use_change_co2_per_capita - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-49.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-50.png)<!-- -->
+
+    ## methane - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-51.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-52.png)<!-- -->
+
+    ## methane_per_capita - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-53.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-54.png)<!-- -->
+
+    ## nitrous_oxide - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-55.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-56.png)<!-- -->
+
+    ## nitrous_oxide_per_capita - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-57.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-58.png)<!-- -->
+
+    ## oil_co2 - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-59.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-60.png)<!-- -->
+
+    ## share_global_co2 - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-61.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-62.png)<!-- -->
+
+    ## share_global_cumulative_co2 - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-63.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-64.png)<!-- -->
+
+    ## share_global_cumulative_luc_co2 - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-65.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-66.png)<!-- -->
+
+    ## share_global_luc_co2 - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-67.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-68.png)<!-- -->
+
+    ## share_of_temperature_change_from_ghg - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-69.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-70.png)<!-- -->
+
+    ## temperature_change_from_ch4 - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-71.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-72.png)<!-- -->
+
+    ## temperature_change_from_co2 - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-73.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-74.png)<!-- -->
+
+    ## temperature_change_from_ghg - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-75.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-76.png)<!-- -->
+
+    ## temperature_change_from_n2o - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-77.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-78.png)<!-- -->
+
+    ## total_ghg - Shapiro-Wilk normality test p-value: 0.000000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-8-79.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-80.png)<!-- -->
+
+    ## total_ghg_excluding_lucf - Shapiro-Wilk normality test p-value: 0.000000

@@ -1,11 +1,13 @@
 ---
 title: "R Notebook for Climate Change Trends"
 output: github_document
+always_allow_html: true
 ---
 
 Loading the libraries requied to analyze the datasets
 
 ```{r}
+
 #loading the required packages
 library(tidyverse)
 library(corrplot)
@@ -203,5 +205,50 @@ cat(strrep("-", 50), "\n")
 cat("Dataset 1: Rows", nrow(df1), "->", nrow(df1_clean), "after cleaning\n")
 cat(strrep("-", 50), "\n")
 cat("Dataset 2: Rows", nrow(df2), "->", nrow(df2_clean), "after cleaning\n")
+```
+
+Univariate Analysis
+
+For numeric columns, we will use shapiro.test() to test if the data follows normal distribution.
+Upon calculating the p-value:
+
+- If p > 0.05: Data is likely normally distributed
+- If p ≤ 0.05: Data significantly deviates from normal distribution
+
+```{r}
+create_univariate_plots <- function(df, dataset_name) {
+  numeric_cols <- names(df)[sapply(df, is.numeric)]
+  categorical_cols <- names(df)[sapply(df, is.factor)]
+
+  for (col in numeric_cols) {
+    p1 <- ggplot(df, aes(x = .data[[col]])) +
+      geom_histogram(bins = 30, fill = "lightblue", alpha = 0.7) +
+      ggtitle(paste("Distribution of", col)) +
+      theme_minimal()
+    
+    p2 <- ggplot(df, aes(y = .data[[col]])) +
+      geom_boxplot(fill = "lightgreen", alpha = 0.7) +
+      ggtitle(paste("Boxplot of", col)) +
+      theme_minimal()
+
+    print(p1)
+    print(p2)
+
+    shapiro_test <- shapiro.test(sample(df[[col]], min(5000, length(df[[col]]))))
+    cat(sprintf("%s - Shapiro-Wilk normality test p-value: %.6f\n", col, shapiro_test$p.value))
+  }
+
+  for (col in categorical_cols) {
+    p <- ggplot(df, aes(x = .data[[col]])) +
+      geom_bar(fill = "coral", alpha = 0.7) +
+      ggtitle(paste("Distribution of", col)) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    print(p)
+  }
+}
+
+create_univariate_plots(df1_clean, "Dataset 1")
+create_univariate_plots(df2_clean, "Dataset 2")
 ```
 
