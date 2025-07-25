@@ -214,6 +214,10 @@ cat(strrep("-", 60), "\n")
 cat("Dataset 2: Columns", ncol(df2), "->", ncol(df2_clean), "| Rows", nrow(df2), "->", nrow(df2_clean), "after cleaning\n")
 cat(strrep("-", 60), "\n")
 
+#saving cleaned datasets
+write.csv(df1_clean, "global-temp-annual-cleaned.csv", row.names = FALSE)
+write.csv(df2_clean, "owid-co2-data-cleaned.csv", row.names = FALSE)
+
 ```
 
 Univariate Analysis:
@@ -360,7 +364,7 @@ corrplot(cor_matrix, method = "color", col = col,
 
 Cross Dataset Analysis - Time Series Analysis for investigating how global temperatures are affected by CO2 levels:
 
-```{r}
+```{r, fig.width=10, fig.height=6, dev='png'}
 combined_data_norm <- combined_data %>% 
   mutate(
     temp_norm = scale(global_temp)[,1],
@@ -456,12 +460,14 @@ print(combined_plot)
 Simple Linear Regression Analysis:
 
 The model summaries show the following for each model
+
 - Coefficients: how much temperature changes per unit of each gas
 - R-squared: how much of temperature variation the model explains
 - P-values: statistical significance
 - Residual standard error: model accuracy
 
 The model comparision table shows the following
+
 - R-squared: Percentage of temperature variation explained (higher = better)
 - Adjusted R-squared: R-squared adjusted for number of variables (accounts for model complexity)
 - AIC (Akaike Information Criterion): Model quality measure (lower = better, balances fit vs complexity)
@@ -499,6 +505,7 @@ print(models_comparison)
 Lag Analysis:
 
 Tests whether past emissions are better predictors than current emissions.
+
 - From the output of the below code, we see that the climate system does have inertia and the CO2 emissions from previous years can affect the current year temperature.
 
 ```{r}
@@ -523,6 +530,7 @@ Change Rate Analysis:
 
 The output below shows a negative correlation between temperature growth rate and CO2 growth rate.
 The negative correlation suggests that year-to-year emission fluctuations don't directly translate to immediate temperature responses. This is consistent with the lag analysis and climate science studies that:
+
 - Long-term cumulative CO2 emissions are more influential on temperature trends than short-term annual changes.
 - Averaging data over multiple years is more likely to reveal the expected positive relationship between emissions and temperature.
 - Due to the inertia of the climate system, current temperatures largely reflect the integrated effect of past emissions rather than short-term fluctuations.
@@ -556,7 +564,33 @@ print(p4)
 
 Interactive Plots:
 
-```{r}
+```{r,  fig.width=10, fig.height=6, dev='png'}
+interactive_plot <- plot_ly(combined_data, x = ~year, y = ~global_temp, 
+                           type = 'scatter', mode = 'lines+markers',
+                           name = 'Temperature', yaxis = 'y') %>%
+  add_trace(y = ~global_co2/1000, name = 'CO2 (Thousands)', yaxis = 'y2') %>%
+  layout(
+    title = "Global Temperature vs CO2 Over Time",
+    xaxis = list(title = "Year"),
+    yaxis = list(title = "Temperature Anomaly (°C)"),
+    yaxis2 = list(side = 'right', overlaying = 'y', 
+                  title = 'CO2 Emissions (Thousand Million Tonnes)')
+  )
 
+interactive_plot
+```
+
+Summary:
+
+```{r}
+cat("\n=== SUMMARY FINDINGS ===\n")
+cat(paste("Data covers", nrow(combined_data), "years from", 
+          min(combined_data$year), "to", max(combined_data$year), "\n"))
+cat(paste("Temperature-CO2 correlation:", 
+          round(cor(combined_data$global_temp, combined_data$global_co2), 3), "\n"))
+cat(paste("Temperature-Cumulative CO2 correlation:", 
+          round(cor(combined_data$global_temp, combined_data$global_cumulative_co2), 3), "\n"))
+cat(paste("Best model R-squared:", 
+          round(max(models_comparison$R_squared), 3), "\n"))
 ```
 

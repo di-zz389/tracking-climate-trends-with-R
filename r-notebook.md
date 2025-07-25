@@ -1,7 +1,7 @@
 R Notebook for Climate Change Trends
 ================
 
-Loading the libraries requied to analyze the datasets
+Loading the libraries requied to analyze the datasets:
 
 ``` r
 #loading the required packages
@@ -128,9 +128,29 @@ library(gridExtra)
 
 ``` r
 library(RColorBrewer)
+library(scales)
 ```
 
-Loading the datasets
+    ## 
+    ## Attaching package: 'scales'
+    ## 
+    ## The following objects are masked from 'package:psych':
+    ## 
+    ##     alpha, rescale
+    ## 
+    ## The following object is masked from 'package:purrr':
+    ## 
+    ##     discard
+    ## 
+    ## The following object is masked from 'package:readr':
+    ## 
+    ##     col_factor
+
+``` r
+library(grid)
+```
+
+Loading the datasets:
 
 ``` r
 #loading datasets
@@ -158,7 +178,7 @@ df2 <- read_csv("owid-co2-data.csv")
     ## ℹ Use `spec()` to retrieve the full column specification for this data.
     ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
-Summary of dataset
+Summary of dataset:
 
 ``` r
 #summary of datasets
@@ -453,7 +473,7 @@ cat(strrep("-", 50), "\n")
 
     ## --------------------------------------------------
 
-Examining Datasets
+Examining Datasets:
 
 ``` r
 cat("Dataset 1 - First 6 rows:\n")
@@ -710,7 +730,7 @@ cat(strrep("-", 50), "\n")
 
     ## --------------------------------------------------
 
-Checking for Missing Values
+Checking for Missing Values:
 
 ``` r
 #analysing missing values
@@ -831,11 +851,11 @@ p2<- ggplot(missing_df2, aes(x = reorder(Variable, Missing_Percentage))) +
 ggplotly(p2, tooltip = "text")
 ```
 
-    ## file:////tmp/Rtmpsui8Sr/file14a1b391ca54e/widget14a1b6e7a42b0.html screenshot completed
+    ## file:////tmp/RtmpTpPYFw/file1c77b6258ed7c/widget1c77b1a0022c4.html screenshot completed
 
 ![](r-notebook_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
 
-Identifying duplicates and unique values in Data
+Identifying duplicates and unique values in Data:
 
 ``` r
 cat("Dataset 1 duplicates:", sum(duplicated(df1)), "\n")
@@ -884,7 +904,7 @@ cat(strrep("-", 50), "\n")
 
     ## --------------------------------------------------
 
-Handling Missing Values
+Handling Missing Values:
 
 ``` r
 handle_missing_values <- function(df, strategy = "auto") {
@@ -970,7 +990,13 @@ cat(strrep("-", 60), "\n")
 
     ## ------------------------------------------------------------
 
-Univariate Analysis
+``` r
+#saving cleaned datasets
+write.csv(df1_clean, "global-temp-annual-cleaned.csv", row.names = FALSE)
+write.csv(df2_clean, "owid-co2-data-cleaned.csv", row.names = FALSE)
+```
+
+Univariate Analysis:
 
 For numeric columns, we will use shapiro.test() to test if the data
 follows normal distribution. Upon calculating the p-value:
@@ -1178,7 +1204,7 @@ create_univariate_plots(df2_clean, "Dataset 2")
 
     ## total_ghg_excluding_lucf - Shapiro-Wilk normality test p-value: 0.000000
 
-Correlation analysis between numeric variables in a dataset
+Correlation analysis between numeric variables in a dataset:
 
 ``` r
 analyze_correlations <- function(df, dataset_name) {
@@ -3939,7 +3965,7 @@ cor_matrix2 <- analyze_correlations(df2_clean, "Dataset 2")
 ![](r-notebook_files/figure-gfm/unnamed-chunk-9-334.png)<!-- -->
 
 Cross Dataset Analysis - Correlation Matrix for investigating how global
-temperatures are affected by CO2 levels
+temperatures are affected by CO2 levels:
 
 ``` r
 #preparing temperature data
@@ -3995,4 +4021,416 @@ corrplot(cor_matrix, method = "color", col = col,
 ![](r-notebook_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 Cross Dataset Analysis - Time Series Analysis for investigating how
-global temperatures are affected by CO2 levels
+global temperatures are affected by CO2 levels:
+
+``` r
+combined_data_norm <- combined_data %>% 
+  mutate(
+    temp_norm = scale(global_temp)[,1],
+    co2_norm = scale(global_co2)[,1], 
+    cumulative_co2_norm = scale(global_cumulative_co2)[,1]
+  )
+
+#interactive time series plot
+p1 <- plot_ly(combined_data_norm, x = ~year) %>%
+  add_lines(y = ~temp_norm, 
+            name = "Global Temperature", 
+            line = list(color = "#1f77b4", width = 3),
+            hovertemplate = "<b>Global Temperature</b><br>Year: %{x}<br>Z-score: %{y:.3f}<br><extra></extra>") %>%
+  add_lines(y = ~co2_norm, 
+            name = "Annual CO2", 
+            line = list(color = "#ff7f0e", width = 3),
+            hovertemplate = "<b>Annual CO2</b><br>Year: %{x}<br>Z-score: %{y:.3f}<br><extra></extra>") %>%
+  add_lines(y = ~cumulative_co2_norm, 
+            name = "Cumulative CO2", 
+            line = list(color = "#2ca02c", width = 3),
+            hovertemplate = "<b>Cumulative CO2</b><br>Year: %{x}<br>Z-score: %{y:.3f}<br><extra></extra>") %>%
+  layout(
+    title = list(text = "Normalized Trends: Temperature vs CO2 (1960-2020)", 
+                 font = list(size = 16)),
+    xaxis = list(title = "Year"),
+    yaxis = list(title = "Normalized Values (Z-scores)"),
+    legend = list(x = 0, y = -0.15, orientation = "h"),
+    hovermode = "x unified",
+    plot_bgcolor = "white",
+    paper_bgcolor = "white"
+  ) %>%
+  config(displayModeBar = TRUE, 
+         modeBarButtonsToRemove = c("pan2d", "select2d", "lasso2d", "autoScale2d"))
+
+p1
+```
+
+    ## file:////tmp/RtmpTpPYFw/file1c77b7078f3ac/widget1c77b25a3e362.html screenshot completed
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+Scatter Plot Analysis:
+
+``` r
+p2 <- ggplot(combined_data, aes(x = global_co2, y = global_temp)) + 
+  geom_point(aes(color = year), size = 3, alpha = 0.8) + 
+  geom_smooth(method = "lm", se = TRUE, color = "red", size = 1.2, alpha = 0.3) + 
+  scale_color_gradient(low = "darkblue", high = "lightblue", 
+                       name = "Year",
+                       breaks = seq(1880, 2020, 20),
+                       labels = seq(1880, 2020, 20)) +
+  scale_x_continuous(labels = function(x) format(x, big.mark = ",", scientific = FALSE)) +
+  labs(title = "Global Temperature vs Annual CO2 Emissions",
+       x = "Global CO2 Emissions (Million Tonnes)", 
+       y = "Global Temperature Anomaly (°C)") + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 9, face = "bold", hjust = 0.5, margin = margin(b = 20)),
+    axis.title = element_text(size = 7, face = "bold"),
+    axis.text = element_text(size = 6),
+    legend.title = element_text(size = 7, face = "bold"),
+    legend.text = element_text(size = 7),
+    legend.position = "right",
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "gray80", fill = NA, size = 0.5),
+    plot.margin = margin(t = 20, r = 10, b = 20, l = 10)
+  )
+```
+
+    ## Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+    ## ℹ Please use `linewidth` instead.
+    ## This warning is displayed once every 8 hours.
+    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+    ## generated.
+
+    ## Warning: The `size` argument of `element_rect()` is deprecated as of ggplot2 3.4.0.
+    ## ℹ Please use the `linewidth` argument instead.
+    ## This warning is displayed once every 8 hours.
+    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+    ## generated.
+
+``` r
+p3 <- ggplot(combined_data, aes(x = global_cumulative_co2, y = global_temp)) + 
+  geom_point(aes(color = year), size = 3, alpha = 0.8) + 
+  geom_smooth(method = "lm", se = TRUE, color = "red", size = 1.2, alpha = 0.3) + 
+  scale_color_gradient(low = "darkblue", high = "lightblue", 
+                       name = "Year",
+                       breaks = seq(1880, 2020, 20),
+                       labels = seq(1880, 2020, 20)) +
+  scale_x_continuous(labels = function(x) paste0(round(x/1000, 1), "B")) +
+  labs(title = "Global Temperature vs Cumulative CO2 Emissions",
+       x = "Cumulative CO2 Emissions (Billion Tonnes)", 
+       y = "Global Temperature Anomaly (°C)") + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 9, face = "bold", hjust = 0.5, margin = margin(b = 20)),
+    axis.title = element_text(size = 7, face = "bold"),
+    axis.text = element_text(size = 6),
+    legend.title = element_text(size = 7, face = "bold"),
+    legend.text = element_text(size = 7),
+    legend.position = "right",
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "gray80", fill = NA, size = 0.5),
+    plot.margin = margin(t = 20, r = 10, b = 20, l = 10)
+  )
+
+combined_plot <- grid.arrange(p2, p3, ncol = 2)
+```
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+``` r
+print(combined_plot)
+```
+
+    ## TableGrob (1 x 2) "arrange": 2 grobs
+    ##   z     cells    name           grob
+    ## 1 1 (1-1,1-1) arrange gtable[layout]
+    ## 2 2 (1-1,2-2) arrange gtable[layout]
+
+Simple Linear Regression Analysis:
+
+The model summaries show the following for each model
+
+- Coefficients: how much temperature changes per unit of each gas
+- R-squared: how much of temperature variation the model explains
+- P-values: statistical significance
+- Residual standard error: model accuracy
+
+The model comparision table shows the following
+
+- R-squared: Percentage of temperature variation explained (higher =
+  better)
+- Adjusted R-squared: R-squared adjusted for number of variables
+  (accounts for model complexity)
+- AIC (Akaike Information Criterion): Model quality measure (lower =
+  better, balances fit vs complexity)
+
+``` r
+model1 <- lm(global_temp ~ global_co2, data = combined_data)
+model2 <- lm(global_temp ~ global_cumulative_co2, data = combined_data)
+model3 <- lm(global_temp ~ global_co2 + global_methane + global_nitrous_oxide, 
+             data = combined_data)
+
+cat("\n=== MODEL 1: Temperature ~ Annual CO2 ===\n")
+```
+
+    ## 
+    ## === MODEL 1: Temperature ~ Annual CO2 ===
+
+``` r
+print(summary(model1))
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = global_temp ~ global_co2, data = combined_data)
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -0.33695 -0.07954 -0.00418  0.08109  0.40706 
+    ## 
+    ## Coefficients:
+    ##               Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept) -2.998e-01  1.689e-02  -17.75   <2e-16 ***
+    ## global_co2   4.253e-06  1.684e-07   25.25   <2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.1314 on 134 degrees of freedom
+    ## Multiple R-squared:  0.8264, Adjusted R-squared:  0.8251 
+    ## F-statistic: 637.7 on 1 and 134 DF,  p-value: < 2.2e-16
+
+``` r
+cat("\n=== MODEL 2: Temperature ~ Cumulative CO2 ===\n")
+```
+
+    ## 
+    ## === MODEL 2: Temperature ~ Cumulative CO2 ===
+
+``` r
+print(summary(model2))
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = global_temp ~ global_cumulative_co2, data = combined_data)
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -0.25110 -0.06885 -0.00895  0.08334  0.38188 
+    ## 
+    ## Coefficients:
+    ##                         Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)           -2.738e-01  1.383e-02  -19.79   <2e-16 ***
+    ## global_cumulative_co2  1.468e-07  4.922e-09   29.84   <2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.1141 on 134 degrees of freedom
+    ## Multiple R-squared:  0.8692, Adjusted R-squared:  0.8682 
+    ## F-statistic: 890.1 on 1 and 134 DF,  p-value: < 2.2e-16
+
+``` r
+cat("\n=== MODEL 3: Temperature ~ Multiple GHGs ===\n")
+```
+
+    ## 
+    ## === MODEL 3: Temperature ~ Multiple GHGs ===
+
+``` r
+print(summary(model3))
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = global_temp ~ global_co2 + global_methane + global_nitrous_oxide, 
+    ##     data = combined_data)
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -0.30909 -0.08074 -0.00340  0.08799  0.39234 
+    ## 
+    ## Coefficients:
+    ##                        Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)          -3.674e-01  8.867e-02  -4.144 6.07e-05 ***
+    ## global_co2            4.924e-06  9.063e-07   5.433 2.59e-07 ***
+    ## global_methane        1.392e-05  1.284e-05   1.084   0.2802    
+    ## global_nitrous_oxide -5.029e-05  2.977e-05  -1.689   0.0935 .  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.1299 on 132 degrees of freedom
+    ## Multiple R-squared:  0.8327, Adjusted R-squared:  0.8289 
+    ## F-statistic: 219.1 on 3 and 132 DF,  p-value: < 2.2e-16
+
+``` r
+models_comparison <- data.frame(
+  Model = c("Annual CO2", "Cumulative CO2", "Multiple GHGs"),
+  R_squared = c(summary(model1)$r.squared, 
+                summary(model2)$r.squared, 
+                summary(model3)$r.squared),
+  Adjusted_R_squared = c(summary(model1)$adj.r.squared,
+                        summary(model2)$adj.r.squared,
+                        summary(model3)$adj.r.squared),
+  AIC = c(AIC(model1), AIC(model2), AIC(model3))
+)
+
+print("Model Comparison:")
+```
+
+    ## [1] "Model Comparison:"
+
+``` r
+print(models_comparison)
+```
+
+    ##            Model R_squared Adjusted_R_squared       AIC
+    ## 1     Annual CO2 0.8263653          0.8250695 -162.0824
+    ## 2 Cumulative CO2 0.8691570          0.8681806 -200.5643
+    ## 3  Multiple GHGs 0.8327364          0.8289349 -163.1664
+
+Lag Analysis:
+
+Tests whether past emissions are better predictors than current
+emissions.
+
+- From the output of the below code, we see that the climate system does
+  have inertia and the CO2 emissions from previous years can affect the
+  current year temperature.
+
+``` r
+combined_data_lag <- combined_data %>%
+  arrange(year) %>%
+  mutate(
+    co2_lag1 = lag(global_co2, 1),
+    co2_lag2 = lag(global_co2, 2),
+    co2_lag5 = lag(global_co2, 5),
+    temp_change = global_temp - lag(global_temp, 1)
+  )
+
+lag_correlations <- combined_data_lag %>%
+  select(global_temp, global_co2, co2_lag1, co2_lag2, co2_lag5) %>%
+  cor(use = "complete.obs")
+
+print("Lag Correlations (Temperature with CO2):")
+```
+
+    ## [1] "Lag Correlations (Temperature with CO2):"
+
+``` r
+print(round(lag_correlations[1, ], 3))
+```
+
+    ## global_temp  global_co2    co2_lag1    co2_lag2    co2_lag5 
+    ##       1.000       0.910       0.913       0.914       0.913
+
+Change Rate Analysis:
+
+The output below shows a negative correlation between temperature growth
+rate and CO2 growth rate. The negative correlation suggests that
+year-to-year emission fluctuations don’t directly translate to immediate
+temperature responses. This is consistent with the lag analysis and
+climate science studies that:
+
+- Long-term cumulative CO2 emissions are more influential on temperature
+  trends than short-term annual changes.
+- Averaging data over multiple years is more likely to reveal the
+  expected positive relationship between emissions and temperature.
+- Due to the inertia of the climate system, current temperatures largely
+  reflect the integrated effect of past emissions rather than short-term
+  fluctuations.
+
+``` r
+combined_data_rates <- combined_data %>%
+  arrange(year) %>%
+  mutate(
+    temp_rate = (global_temp - lag(global_temp, 1)) / 1,
+    co2_rate = (global_co2 - lag(global_co2, 1)) / lag(global_co2, 1) * 100
+  ) %>%
+  filter(!is.na(temp_rate) & !is.na(co2_rate))
+
+rate_correlation <- cor(combined_data_rates$temp_rate, 
+                       combined_data_rates$co2_rate, use = "complete.obs")
+
+cat(paste("\nCorrelation between temperature change rate and CO2 growth rate:", 
+          round(rate_correlation, 3)))
+```
+
+    ## 
+    ## Correlation between temperature change rate and CO2 growth rate: -0.124
+
+``` r
+p4 <- ggplot(combined_data_rates, aes(x = co2_rate, y = temp_rate)) +
+  geom_point(aes(color = year), size = 3, alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(title = "Temperature Change Rate vs CO2 Growth Rate",
+       x = "CO2 Growth Rate (%)",
+       y = "Temperature Change Rate (°C/year)",
+       color = "Year") +
+  theme_minimal()
+
+print(p4)
+```
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
+Interactive Plots:
+
+``` r
+interactive_plot <- plot_ly(combined_data, x = ~year, y = ~global_temp, 
+                           type = 'scatter', mode = 'lines+markers',
+                           name = 'Temperature', yaxis = 'y') %>%
+  add_trace(y = ~global_co2/1000, name = 'CO2 (Thousands)', yaxis = 'y2') %>%
+  layout(
+    title = "Global Temperature vs CO2 Over Time",
+    xaxis = list(title = "Year"),
+    yaxis = list(title = "Temperature Anomaly (°C)"),
+    yaxis2 = list(side = 'right', overlaying = 'y', 
+                  title = 'CO2 Emissions (Thousand Million Tonnes)')
+  )
+
+interactive_plot
+```
+
+    ## file:////tmp/RtmpTpPYFw/file1c77bcb9f964/widget1c77b3df8613c.html screenshot completed
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
+Summary:
+
+``` r
+cat("\n=== SUMMARY FINDINGS ===\n")
+```
+
+    ## 
+    ## === SUMMARY FINDINGS ===
+
+``` r
+cat(paste("Data covers", nrow(combined_data), "years from", 
+          min(combined_data$year), "to", max(combined_data$year), "\n"))
+```
+
+    ## Data covers 136 years from 1880 to 2015
+
+``` r
+cat(paste("Temperature-CO2 correlation:", 
+          round(cor(combined_data$global_temp, combined_data$global_co2), 3), "\n"))
+```
+
+    ## Temperature-CO2 correlation: 0.909
+
+``` r
+cat(paste("Temperature-Cumulative CO2 correlation:", 
+          round(cor(combined_data$global_temp, combined_data$global_cumulative_co2), 3), "\n"))
+```
+
+    ## Temperature-Cumulative CO2 correlation: 0.932
+
+``` r
+cat(paste("Best model R-squared:", 
+          round(max(models_comparison$R_squared), 3), "\n"))
+```
+
+    ## Best model R-squared: 0.869
