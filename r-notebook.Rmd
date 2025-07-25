@@ -7,7 +7,6 @@ always_allow_html: true
 Loading the libraries requied to analyze the datasets
 
 ```{r}
-
 #loading the required packages
 library(tidyverse)
 library(corrplot)
@@ -21,7 +20,9 @@ library(GGally)
 library(mice)
 library(readr)
 library(patchwork)
-
+library(ggcorrplot)
+library(gridExtra)
+library(RColorBrewer)
 ```
 
 Loading the datasets
@@ -180,6 +181,9 @@ handle_missing_values <- function(df, strategy = "auto") {
     cat("Removing columns with >50% missing values:", paste(high_missing_cols, collapse = ", "), "\n")
     df_clean <- df_clean %>% select(-all_of(high_missing_cols))
   }
+  cat(strrep("-", 60), "\n")
+  retained_cols <- names(df_clean)
+  cat("Retained", length(retained_cols), "columns:", paste(retained_cols, collapse = ", "), "\n")
   
   #handling remaining missing values
   for (col in names(df_clean)) {
@@ -199,12 +203,15 @@ handle_missing_values <- function(df, strategy = "auto") {
 }
 
 df1_clean <- handle_missing_values(df1)
-df2_clean <- handle_missing_values(df2)
+cat(strrep("-", 60), "\n")
+cat("Dataset 1: Columns", ncol(df1), "->", ncol(df1_clean), "| Rows", nrow(df1), "->", nrow(df1_clean), "after cleaning\n")
+cat(strrep("-", 60), "\n")
 
-cat(strrep("-", 50), "\n")
-cat("Dataset 1: Rows", nrow(df1), "->", nrow(df1_clean), "after cleaning\n")
-cat(strrep("-", 50), "\n")
-cat("Dataset 2: Rows", nrow(df2), "->", nrow(df2_clean), "after cleaning\n")
+df2_clean <- handle_missing_values(df2)
+cat(strrep("-", 60), "\n")
+cat("Dataset 2: Columns", ncol(df2), "->", ncol(df2_clean), "| Rows", nrow(df2), "->", nrow(df2_clean), "after cleaning\n")
+cat(strrep("-", 60), "\n")
+
 ```
 
 Univariate Analysis
@@ -252,3 +259,101 @@ create_univariate_plots(df1_clean, "Dataset 1")
 create_univariate_plots(df2_clean, "Dataset 2")
 ```
 
+Correlation analysis between numeric variables in a dataset
+
+```{r}
+analyze_correlations <- function(df, dataset_name) {
+  numeric_df <- df[, sapply(df, is.numeric), drop = FALSE]
+  
+  if (ncol(numeric_df) < 2) {
+    cat("Not enough numeric variables for correlation analysis in", dataset_name, "\n")
+    return()
+  }
+  
+  cor_matrix <- cor(numeric_df, use = "complete.obs")
+  cat("=== CORRELATION MATRIX FOR", dataset_name, "===\n")
+  print(round(cor_matrix, 3))
+  corrplot(cor_matrix, method = "color", type = "upper", 
+           order = "hclust", tl.cex = 0.8, tl.col = "black",
+           title = paste("Correlation Matrix -", dataset_name))
+
+  ggcorrplot::ggcorrplot(cor_matrix, hc.order = TRUE, type = "lower",
+                        lab = TRUE, lab_size = 3, method = "circle",
+                        colors = c("red", "white", "blue"),
+                        title = paste("Correlation Heatmap -", dataset_name))
+
+  strong_correlations <- which(abs(cor_matrix) > 0.7 & cor_matrix != 1, arr.ind = TRUE)
+  
+  if (nrow(strong_correlations) > 0) {
+    cat("\nStrong correlations (|r| > 0.7) in", dataset_name, ":\n")
+    for (i in 1:nrow(strong_correlations)) {
+      row_idx <- strong_correlations[i, 1]
+      col_idx <- strong_correlations[i, 2]
+      var1 <- rownames(cor_matrix)[row_idx]
+      var2 <- colnames(cor_matrix)[col_idx]
+      correlation <- cor_matrix[row_idx, col_idx]
+      cat(sprintf("%s - %s: %.3f\n", var1, var2, correlation))
+
+      p <- ggplot(df, aes(x = !!sym(var1), y = !!sym(var2))) +
+        geom_point(alpha = 0.6, color = "blue") +
+        geom_smooth(method = "lm", color = "red", se = TRUE) +
+        ggtitle(paste(var1, "vs", var2, sprintf("(r = %.3f)", correlation))) +
+        theme_minimal()
+      print(p)
+    }
+  }
+  
+  return(cor_matrix)
+}
+
+cor_matrix1 <- analyze_correlations(df1_clean, "Dataset 1")
+cor_matrix2 <- analyze_correlations(df2_clean, "Dataset 2")
+```
+
+Cross Dataset Analysis - Correlation Matrix for investigating how global temperatures are affected by CO2 levels
+
+```{r}
+#preparing temperature data
+temp_data <- df1_clean %>%
+  select(Year, `Land and Ocean`) %>%
+  rename(year = Year, global_temp = `Land and Ocean`) %>%
+  filter(!is.na(global_temp))
+
+#preparing CO2 data - aggregate global totals by year
+co2_data <- df2_clean %>%
+  group_by(year) %>%
+  summarise(
+    global_co2 = sum(co2, na.rm = TRUE),
+    global_co2_per_capita = mean(co2_per_capita, na.rm = TRUE),
+    global_cumulative_co2 = sum(cumulative_co2, na.rm = TRUE),
+    global_ghg = sum(total_ghg, na.rm = TRUE),
+    global_methane = sum(methane, na.rm = TRUE),
+    global_nitrous_oxide = sum(nitrous_oxide, na.rm = TRUE),
+    avg_temp_change_from_co2 = mean(temperature_change_from_co2, na.rm = TRUE),
+    avg_temp_change_from_ghg = mean(temperature_change_from_ghg, na.rm = TRUE),
+    .groups = 'drop'
+  ) %>%
+  filter(!is.na(global_co2) & global_co2 > 0)
+
+combined_data <- inner_join(temp_data, co2_data, by = "year")
+
+print(paste("Combined dataset has", nrow(combined_data), "years of data"))
+print(paste("Year range:", min(combined_data$year), "-", max(combined_data$year)))
+```
+
+```{r}
+#calculating correlations
+correlation_vars <- combined_data %>%
+  select(global_temp, global_co2, global_co2_per_capita, global_cumulative_co2, 
+         global_ghg, global_methane, global_nitrous_oxide)
+
+cor_matrix <- cor(correlation_vars, use = "complete.obs")
+col <- colorRampPalette(brewer.pal(9, "Blues"))(200)
+corrplot(cor_matrix, method = "color", col = col,
+  addCoef.col = "white", tl.col = "black", tl.srt = 45, 
+  title = "Temperature vs CO2 Correlations", 
+  mar = c(0,0,3,0), number.cex = 0.8, cl.cex = 0.8, tl.cex = 0.9, 
+  outline = TRUE, addgrid.col = NA)
+```
+
+Cross Dataset Analysis - Time Series Analysis for investigating how global temperatures are affected by CO2 levels

@@ -115,6 +115,19 @@ library(mice)
 ``` r
 library(readr)
 library(patchwork)
+library(ggcorrplot)
+library(gridExtra)
+```
+
+    ## 
+    ## Attaching package: 'gridExtra'
+    ## 
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     combine
+
+``` r
+library(RColorBrewer)
 ```
 
 Loading the datasets
@@ -818,7 +831,7 @@ p2<- ggplot(missing_df2, aes(x = reorder(Variable, Missing_Percentage))) +
 ggplotly(p2, tooltip = "text")
 ```
 
-    ## file:////tmp/RtmpFH79uH/filedf6134171626/widgetdf612dc9d7aa.html screenshot completed
+    ## file:////tmp/Rtmpsui8Sr/file14a1b391ca54e/widget14a1b6e7a42b0.html screenshot completed
 
 ![](r-notebook_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
 
@@ -886,6 +899,9 @@ handle_missing_values <- function(df, strategy = "auto") {
     cat("Removing columns with >50% missing values:", paste(high_missing_cols, collapse = ", "), "\n")
     df_clean <- df_clean %>% select(-all_of(high_missing_cols))
   }
+  cat(strrep("-", 60), "\n")
+  retained_cols <- names(df_clean)
+  cat("Retained", length(retained_cols), "columns:", paste(retained_cols, collapse = ", "), "\n")
   
   #handling remaining missing values
   for (col in names(df_clean)) {
@@ -905,34 +921,54 @@ handle_missing_values <- function(df, strategy = "auto") {
 }
 
 df1_clean <- handle_missing_values(df1)
+```
+
+    ## ------------------------------------------------------------ 
+    ## Retained 8 columns: Year, Land, Land and Ocean, N Hem, S Hem, Band 1, Band 2, Band 3
+
+``` r
+cat(strrep("-", 60), "\n")
+```
+
+    ## ------------------------------------------------------------
+
+``` r
+cat("Dataset 1: Columns", ncol(df1), "->", ncol(df1_clean), "| Rows", nrow(df1), "->", nrow(df1_clean), "after cleaning\n")
+```
+
+    ## Dataset 1: Columns 8 -> 8 | Rows 136 -> 136 after cleaning
+
+``` r
+cat(strrep("-", 60), "\n")
+```
+
+    ## ------------------------------------------------------------
+
+``` r
 df2_clean <- handle_missing_values(df2)
 ```
 
-    ## Removing columns with >50% missing values: gdp, co2_including_luc, co2_including_luc_growth_abs, co2_including_luc_growth_prct, co2_including_luc_per_capita, co2_including_luc_per_gdp, co2_including_luc_per_unit_energy, co2_per_gdp, co2_per_unit_energy, coal_co2, coal_co2_per_capita, consumption_co2, consumption_co2_per_capita, consumption_co2_per_gdp, cumulative_co2_including_luc, cumulative_coal_co2, cumulative_flaring_co2, cumulative_gas_co2, cumulative_other_co2, energy_per_capita, energy_per_gdp, flaring_co2, flaring_co2_per_capita, gas_co2, gas_co2_per_capita, oil_co2_per_capita, other_co2_per_capita, other_industry_co2, primary_energy_consumption, share_global_cement_co2, share_global_co2_including_luc, share_global_coal_co2, share_global_cumulative_cement_co2, share_global_cumulative_co2_including_luc, share_global_cumulative_coal_co2, share_global_cumulative_flaring_co2, share_global_cumulative_gas_co2, share_global_cumulative_oil_co2, share_global_cumulative_other_co2, share_global_flaring_co2, share_global_gas_co2, share_global_oil_co2, share_global_other_co2, trade_co2, trade_co2_share
+    ## Removing columns with >50% missing values: gdp, co2_including_luc, co2_including_luc_growth_abs, co2_including_luc_growth_prct, co2_including_luc_per_capita, co2_including_luc_per_gdp, co2_including_luc_per_unit_energy, co2_per_gdp, co2_per_unit_energy, coal_co2, coal_co2_per_capita, consumption_co2, consumption_co2_per_capita, consumption_co2_per_gdp, cumulative_co2_including_luc, cumulative_coal_co2, cumulative_flaring_co2, cumulative_gas_co2, cumulative_other_co2, energy_per_capita, energy_per_gdp, flaring_co2, flaring_co2_per_capita, gas_co2, gas_co2_per_capita, oil_co2_per_capita, other_co2_per_capita, other_industry_co2, primary_energy_consumption, share_global_cement_co2, share_global_co2_including_luc, share_global_coal_co2, share_global_cumulative_cement_co2, share_global_cumulative_co2_including_luc, share_global_cumulative_coal_co2, share_global_cumulative_flaring_co2, share_global_cumulative_gas_co2, share_global_cumulative_oil_co2, share_global_cumulative_other_co2, share_global_flaring_co2, share_global_gas_co2, share_global_oil_co2, share_global_other_co2, trade_co2, trade_co2_share 
+    ## ------------------------------------------------------------ 
+    ## Retained 34 columns: country, year, iso_code, population, cement_co2, cement_co2_per_capita, co2, co2_growth_abs, co2_growth_prct, co2_per_capita, cumulative_cement_co2, cumulative_co2, cumulative_luc_co2, cumulative_oil_co2, ghg_excluding_lucf_per_capita, ghg_per_capita, land_use_change_co2, land_use_change_co2_per_capita, methane, methane_per_capita, nitrous_oxide, nitrous_oxide_per_capita, oil_co2, share_global_co2, share_global_cumulative_co2, share_global_cumulative_luc_co2, share_global_luc_co2, share_of_temperature_change_from_ghg, temperature_change_from_ch4, temperature_change_from_co2, temperature_change_from_ghg, temperature_change_from_n2o, total_ghg, total_ghg_excluding_lucf
 
 ``` r
-cat(strrep("-", 50), "\n")
+cat(strrep("-", 60), "\n")
 ```
 
-    ## --------------------------------------------------
+    ## ------------------------------------------------------------
 
 ``` r
-cat("Dataset 1: Rows", nrow(df1), "->", nrow(df1_clean), "after cleaning\n")
+cat("Dataset 2: Columns", ncol(df2), "->", ncol(df2_clean), "| Rows", nrow(df2), "->", nrow(df2_clean), "after cleaning\n")
 ```
 
-    ## Dataset 1: Rows 136 -> 136 after cleaning
+    ## Dataset 2: Columns 79 -> 34 | Rows 50191 -> 50191 after cleaning
 
 ``` r
-cat(strrep("-", 50), "\n")
+cat(strrep("-", 60), "\n")
 ```
 
-    ## --------------------------------------------------
-
-``` r
-cat("Dataset 2: Rows", nrow(df2), "->", nrow(df2_clean), "after cleaning\n")
-```
-
-    ## Dataset 2: Rows 50191 -> 50191 after cleaning
+    ## ------------------------------------------------------------
 
 Univariate Analysis
 
@@ -1141,3 +1177,2822 @@ create_univariate_plots(df2_clean, "Dataset 2")
 ![](r-notebook_files/figure-gfm/unnamed-chunk-8-79.png)<!-- -->![](r-notebook_files/figure-gfm/unnamed-chunk-8-80.png)<!-- -->
 
     ## total_ghg_excluding_lucf - Shapiro-Wilk normality test p-value: 0.000000
+
+Correlation analysis between numeric variables in a dataset
+
+``` r
+analyze_correlations <- function(df, dataset_name) {
+  numeric_df <- df[, sapply(df, is.numeric), drop = FALSE]
+  
+  if (ncol(numeric_df) < 2) {
+    cat("Not enough numeric variables for correlation analysis in", dataset_name, "\n")
+    return()
+  }
+  
+  cor_matrix <- cor(numeric_df, use = "complete.obs")
+  cat("=== CORRELATION MATRIX FOR", dataset_name, "===\n")
+  print(round(cor_matrix, 3))
+  corrplot(cor_matrix, method = "color", type = "upper", 
+           order = "hclust", tl.cex = 0.8, tl.col = "black",
+           title = paste("Correlation Matrix -", dataset_name))
+
+  ggcorrplot::ggcorrplot(cor_matrix, hc.order = TRUE, type = "lower",
+                        lab = TRUE, lab_size = 3, method = "circle",
+                        colors = c("red", "white", "blue"),
+                        title = paste("Correlation Heatmap -", dataset_name))
+
+  strong_correlations <- which(abs(cor_matrix) > 0.7 & cor_matrix != 1, arr.ind = TRUE)
+  
+  if (nrow(strong_correlations) > 0) {
+    cat("\nStrong correlations (|r| > 0.7) in", dataset_name, ":\n")
+    for (i in 1:nrow(strong_correlations)) {
+      row_idx <- strong_correlations[i, 1]
+      col_idx <- strong_correlations[i, 2]
+      var1 <- rownames(cor_matrix)[row_idx]
+      var2 <- colnames(cor_matrix)[col_idx]
+      correlation <- cor_matrix[row_idx, col_idx]
+      cat(sprintf("%s - %s: %.3f\n", var1, var2, correlation))
+
+      p <- ggplot(df, aes(x = !!sym(var1), y = !!sym(var2))) +
+        geom_point(alpha = 0.6, color = "blue") +
+        geom_smooth(method = "lm", color = "red", se = TRUE) +
+        ggtitle(paste(var1, "vs", var2, sprintf("(r = %.3f)", correlation))) +
+        theme_minimal()
+      print(p)
+    }
+  }
+  
+  return(cor_matrix)
+}
+
+cor_matrix1 <- analyze_correlations(df1_clean, "Dataset 1")
+```
+
+    ## === CORRELATION MATRIX FOR Dataset 1 ===
+    ##                 Year  Land Land and Ocean N Hem S Hem Band 1 Band 2 Band 3
+    ## Year           1.000 0.906          0.866 0.843 0.831  0.665  0.678  0.776
+    ## Land           0.906 1.000          0.975 0.967 0.914  0.847  0.832  0.833
+    ## Land and Ocean 0.866 0.975          1.000 0.975 0.960  0.892  0.907  0.888
+    ## N Hem          0.843 0.967          0.975 1.000 0.873  0.920  0.852  0.783
+    ## S Hem          0.831 0.914          0.960 0.873 1.000  0.792  0.912  0.955
+    ## Band 1         0.665 0.847          0.892 0.920 0.792  1.000  0.806  0.772
+    ## Band 2         0.678 0.832          0.907 0.852 0.912  0.806  1.000  0.826
+    ## Band 3         0.776 0.833          0.888 0.783 0.955  0.772  0.826  1.000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
+    ## 
+    ## Strong correlations (|r| > 0.7) in Dataset 1 :
+    ## Land - Year: 0.906
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
+
+    ## Land and Ocean - Year: 0.866
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-3.png)<!-- -->
+
+    ## N Hem - Year: 0.843
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-4.png)<!-- -->
+
+    ## S Hem - Year: 0.831
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-5.png)<!-- -->
+
+    ## Band 3 - Year: 0.776
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-6.png)<!-- -->
+
+    ## Year - Land: 0.906
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-7.png)<!-- -->
+
+    ## Land and Ocean - Land: 0.975
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-8.png)<!-- -->
+
+    ## N Hem - Land: 0.967
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-9.png)<!-- -->
+
+    ## S Hem - Land: 0.914
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-10.png)<!-- -->
+
+    ## Band 1 - Land: 0.847
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-11.png)<!-- -->
+
+    ## Band 2 - Land: 0.832
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-12.png)<!-- -->
+
+    ## Band 3 - Land: 0.833
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-13.png)<!-- -->
+
+    ## Year - Land and Ocean: 0.866
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-14.png)<!-- -->
+
+    ## Land - Land and Ocean: 0.975
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-15.png)<!-- -->
+
+    ## N Hem - Land and Ocean: 0.975
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-16.png)<!-- -->
+
+    ## S Hem - Land and Ocean: 0.960
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-17.png)<!-- -->
+
+    ## Band 1 - Land and Ocean: 0.892
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-18.png)<!-- -->
+
+    ## Band 2 - Land and Ocean: 0.907
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-19.png)<!-- -->
+
+    ## Band 3 - Land and Ocean: 0.888
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-20.png)<!-- -->
+
+    ## Year - N Hem: 0.843
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-21.png)<!-- -->
+
+    ## Land - N Hem: 0.967
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-22.png)<!-- -->
+
+    ## Land and Ocean - N Hem: 0.975
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-23.png)<!-- -->
+
+    ## S Hem - N Hem: 0.873
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-24.png)<!-- -->
+
+    ## Band 1 - N Hem: 0.920
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-25.png)<!-- -->
+
+    ## Band 2 - N Hem: 0.852
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-26.png)<!-- -->
+
+    ## Band 3 - N Hem: 0.783
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-27.png)<!-- -->
+
+    ## Year - S Hem: 0.831
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-28.png)<!-- -->
+
+    ## Land - S Hem: 0.914
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-29.png)<!-- -->
+
+    ## Land and Ocean - S Hem: 0.960
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-30.png)<!-- -->
+
+    ## N Hem - S Hem: 0.873
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-31.png)<!-- -->
+
+    ## Band 1 - S Hem: 0.792
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-32.png)<!-- -->
+
+    ## Band 2 - S Hem: 0.912
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-33.png)<!-- -->
+
+    ## Band 3 - S Hem: 0.955
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-34.png)<!-- -->
+
+    ## Land - Band 1: 0.847
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-35.png)<!-- -->
+
+    ## Land and Ocean - Band 1: 0.892
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-36.png)<!-- -->
+
+    ## N Hem - Band 1: 0.920
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-37.png)<!-- -->
+
+    ## S Hem - Band 1: 0.792
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-38.png)<!-- -->
+
+    ## Band 2 - Band 1: 0.806
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-39.png)<!-- -->
+
+    ## Band 3 - Band 1: 0.772
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-40.png)<!-- -->
+
+    ## Land - Band 2: 0.832
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-41.png)<!-- -->
+
+    ## Land and Ocean - Band 2: 0.907
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-42.png)<!-- -->
+
+    ## N Hem - Band 2: 0.852
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-43.png)<!-- -->
+
+    ## S Hem - Band 2: 0.912
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-44.png)<!-- -->
+
+    ## Band 1 - Band 2: 0.806
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-45.png)<!-- -->
+
+    ## Band 3 - Band 2: 0.826
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-46.png)<!-- -->
+
+    ## Year - Band 3: 0.776
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-47.png)<!-- -->
+
+    ## Land - Band 3: 0.833
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-48.png)<!-- -->
+
+    ## Land and Ocean - Band 3: 0.888
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-49.png)<!-- -->
+
+    ## N Hem - Band 3: 0.783
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-50.png)<!-- -->
+
+    ## S Hem - Band 3: 0.955
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-51.png)<!-- -->
+
+    ## Band 1 - Band 3: 0.772
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-52.png)<!-- -->
+
+    ## Band 2 - Band 3: 0.826
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-53.png)<!-- -->
+
+``` r
+cor_matrix2 <- analyze_correlations(df2_clean, "Dataset 2")
+```
+
+    ## === CORRELATION MATRIX FOR Dataset 2 ===
+    ##                                        year population cement_co2
+    ## year                                  1.000      0.100      0.114
+    ## population                            0.100      1.000      0.824
+    ## cement_co2                            0.114      0.824      1.000
+    ## cement_co2_per_capita                 0.356      0.104      0.179
+    ## co2                                   0.160      0.703      0.751
+    ## co2_growth_abs                        0.059      0.508      0.495
+    ## co2_growth_prct                       0.003     -0.002     -0.002
+    ## co2_per_capita                        0.142      0.011      0.031
+    ## cumulative_cement_co2                 0.125      0.779      0.941
+    ## cumulative_co2                        0.133      0.716      0.764
+    ## cumulative_luc_co2                    0.145      0.832      0.708
+    ## cumulative_oil_co2                    0.130      0.707      0.753
+    ## ghg_excluding_lucf_per_capita         0.249      0.036      0.056
+    ## ghg_per_capita                        0.132     -0.006      0.015
+    ## land_use_change_co2                   0.068      0.646      0.393
+    ## land_use_change_co2_per_capita       -0.028     -0.033     -0.029
+    ## methane                               0.133      0.898      0.793
+    ## methane_per_capita                    0.115     -0.013     -0.002
+    ## nitrous_oxide                         0.148      0.857      0.788
+    ## nitrous_oxide_per_capita              0.146     -0.012      0.005
+    ## oil_co2                               0.136      0.794      0.790
+    ## share_global_co2                     -0.131      0.341      0.271
+    ## share_global_cumulative_co2          -0.124      0.304      0.236
+    ## share_global_cumulative_luc_co2       0.052      0.602      0.426
+    ## share_global_luc_co2                  0.042      0.603      0.376
+    ## share_of_temperature_change_from_ghg  0.053      0.547      0.412
+    ## temperature_change_from_ch4           0.150      0.888      0.830
+    ## temperature_change_from_co2           0.147      0.750      0.731
+    ## temperature_change_from_ghg           0.150      0.796      0.767
+    ## temperature_change_from_n2o           0.148      0.807      0.780
+    ## total_ghg                             0.136      0.847      0.812
+    ## total_ghg_excluding_lucf              0.140      0.807      0.843
+    ##                                      cement_co2_per_capita    co2
+    ## year                                                 0.356  0.160
+    ## population                                           0.104  0.703
+    ## cement_co2                                           0.179  0.751
+    ## cement_co2_per_capita                                1.000  0.140
+    ## co2                                                  0.140  1.000
+    ## co2_growth_abs                                       0.090  0.411
+    ## co2_growth_prct                                     -0.005 -0.003
+    ## co2_per_capita                                       0.218  0.045
+    ## cumulative_cement_co2                                0.179  0.773
+    ## cumulative_co2                                       0.169  0.797
+    ## cumulative_luc_co2                                   0.132  0.737
+    ## cumulative_oil_co2                                   0.156  0.771
+    ## ghg_excluding_lucf_per_capita                        0.454  0.077
+    ## ghg_per_capita                                       0.252  0.028
+    ## land_use_change_co2                                  0.026  0.434
+    ## land_use_change_co2_per_capita                      -0.093 -0.040
+    ## methane                                              0.128  0.755
+    ## methane_per_capita                                   0.179 -0.002
+    ## nitrous_oxide                                        0.143  0.766
+    ## nitrous_oxide_per_capita                             0.124  0.008
+    ## oil_co2                                              0.179  0.818
+    ## share_global_co2                                     0.023  0.331
+    ## share_global_cumulative_co2                          0.024  0.325
+    ## share_global_cumulative_luc_co2                      0.055  0.503
+    ## share_global_luc_co2                                 0.016  0.406
+    ## share_of_temperature_change_from_ghg                 0.058  0.508
+    ## temperature_change_from_ch4                          0.143  0.784
+    ## temperature_change_from_co2                          0.143  0.761
+    ## temperature_change_from_ghg                          0.144  0.775
+    ## temperature_change_from_n2o                          0.138  0.766
+    ## total_ghg                                            0.146  0.783
+    ## total_ghg_excluding_lucf                             0.168  0.799
+    ##                                      co2_growth_abs co2_growth_prct
+    ## year                                          0.059           0.003
+    ## population                                    0.508          -0.002
+    ## cement_co2                                    0.495          -0.002
+    ## cement_co2_per_capita                         0.090          -0.005
+    ## co2                                           0.411          -0.003
+    ## co2_growth_abs                                1.000           0.000
+    ## co2_growth_prct                               0.000           1.000
+    ## co2_per_capita                                0.026           0.004
+    ## cumulative_cement_co2                         0.384          -0.002
+    ## cumulative_co2                                0.342          -0.002
+    ## cumulative_luc_co2                            0.475          -0.003
+    ## cumulative_oil_co2                            0.307          -0.002
+    ## ghg_excluding_lucf_per_capita                 0.050           0.008
+    ## ghg_per_capita                                0.024           0.015
+    ## land_use_change_co2                           0.376          -0.003
+    ## land_use_change_co2_per_capita               -0.011           0.017
+    ## methane                                       0.507          -0.003
+    ## methane_per_capita                            0.003           0.001
+    ## nitrous_oxide                                 0.486          -0.003
+    ## nitrous_oxide_per_capita                      0.005          -0.001
+    ## oil_co2                                       0.444          -0.002
+    ## share_global_co2                              0.232          -0.003
+    ## share_global_cumulative_co2                   0.198          -0.003
+    ## share_global_cumulative_luc_co2               0.358          -0.003
+    ## share_global_luc_co2                          0.339          -0.003
+    ## share_of_temperature_change_from_ghg          0.333          -0.003
+    ## temperature_change_from_ch4                   0.481          -0.003
+    ## temperature_change_from_co2                   0.388          -0.003
+    ## temperature_change_from_ghg                   0.417          -0.003
+    ## temperature_change_from_n2o                   0.402          -0.003
+    ## total_ghg                                     0.492          -0.003
+    ## total_ghg_excluding_lucf                      0.471          -0.003
+    ##                                      co2_per_capita cumulative_cement_co2
+    ## year                                          0.142                 0.125
+    ## population                                    0.011                 0.779
+    ## cement_co2                                    0.031                 0.941
+    ## cement_co2_per_capita                         0.218                 0.179
+    ## co2                                           0.045                 0.773
+    ## co2_growth_abs                                0.026                 0.384
+    ## co2_growth_prct                               0.004                -0.002
+    ## co2_per_capita                                1.000                 0.041
+    ## cumulative_cement_co2                         0.041                 1.000
+    ## cumulative_co2                                0.065                 0.892
+    ## cumulative_luc_co2                            0.046                 0.711
+    ## cumulative_oil_co2                            0.058                 0.893
+    ## ghg_excluding_lucf_per_capita                 0.386                 0.070
+    ## ghg_per_capita                                0.250                 0.023
+    ## land_use_change_co2                           0.003                 0.345
+    ## land_use_change_co2_per_capita               -0.037                -0.033
+    ## methane                                       0.032                 0.775
+    ## methane_per_capita                            0.193                -0.001
+    ## nitrous_oxide                                 0.039                 0.789
+    ## nitrous_oxide_per_capita                      0.057                 0.011
+    ## oil_co2                                       0.063                 0.848
+    ## share_global_co2                              0.019                 0.267
+    ## share_global_cumulative_co2                   0.023                 0.256
+    ## share_global_cumulative_luc_co2               0.027                 0.417
+    ## share_global_luc_co2                          0.000                 0.337
+    ## share_of_temperature_change_from_ghg          0.031                 0.424
+    ## temperature_change_from_ch4                   0.039                 0.837
+    ## temperature_change_from_co2                   0.053                 0.809
+    ## temperature_change_from_ghg                   0.050                 0.827
+    ## temperature_change_from_n2o                   0.044                 0.848
+    ## total_ghg                                     0.044                 0.816
+    ## total_ghg_excluding_lucf                      0.054                 0.862
+    ##                                      cumulative_co2 cumulative_luc_co2
+    ## year                                          0.133              0.145
+    ## population                                    0.716              0.832
+    ## cement_co2                                    0.764              0.708
+    ## cement_co2_per_capita                         0.169              0.132
+    ## co2                                           0.797              0.737
+    ## co2_growth_abs                                0.342              0.475
+    ## co2_growth_prct                              -0.002             -0.003
+    ## co2_per_capita                                0.065              0.046
+    ## cumulative_cement_co2                         0.892              0.711
+    ## cumulative_co2                                1.000              0.803
+    ## cumulative_luc_co2                            0.803              1.000
+    ## cumulative_oil_co2                            0.979              0.755
+    ## ghg_excluding_lucf_per_capita                 0.109              0.084
+    ## ghg_per_capita                                0.050              0.050
+    ## land_use_change_co2                           0.418              0.802
+    ## land_use_change_co2_per_capita               -0.036             -0.002
+    ## methane                                       0.800              0.925
+    ## methane_per_capita                            0.007              0.006
+    ## nitrous_oxide                                 0.834              0.892
+    ## nitrous_oxide_per_capita                      0.025              0.019
+    ## oil_co2                                       0.941              0.850
+    ## share_global_co2                              0.358              0.452
+    ## share_global_cumulative_co2                   0.379              0.433
+    ## share_global_cumulative_luc_co2               0.533              0.810
+    ## share_global_luc_co2                          0.394              0.743
+    ## share_of_temperature_change_from_ghg          0.563              0.744
+    ## temperature_change_from_ch4                   0.855              0.908
+    ## temperature_change_from_co2                   0.908              0.860
+    ## temperature_change_from_ghg                   0.904              0.881
+    ## temperature_change_from_n2o                   0.901              0.844
+    ## total_ghg                                     0.853              0.908
+    ## total_ghg_excluding_lucf                      0.889              0.846
+    ##                                      cumulative_oil_co2
+    ## year                                              0.130
+    ## population                                        0.707
+    ## cement_co2                                        0.753
+    ## cement_co2_per_capita                             0.156
+    ## co2                                               0.771
+    ## co2_growth_abs                                    0.307
+    ## co2_growth_prct                                  -0.002
+    ## co2_per_capita                                    0.058
+    ## cumulative_cement_co2                             0.893
+    ## cumulative_co2                                    0.979
+    ## cumulative_luc_co2                                0.755
+    ## cumulative_oil_co2                                1.000
+    ## ghg_excluding_lucf_per_capita                     0.100
+    ## ghg_per_capita                                    0.045
+    ## land_use_change_co2                               0.362
+    ## land_use_change_co2_per_capita                   -0.032
+    ## methane                                           0.758
+    ## methane_per_capita                                0.006
+    ## nitrous_oxide                                     0.796
+    ## nitrous_oxide_per_capita                          0.024
+    ## oil_co2                                           0.928
+    ## share_global_co2                                  0.290
+    ## share_global_cumulative_co2                       0.306
+    ## share_global_cumulative_luc_co2                   0.459
+    ## share_global_luc_co2                              0.343
+    ## share_of_temperature_change_from_ghg              0.480
+    ## temperature_change_from_ch4                       0.830
+    ## temperature_change_from_co2                       0.879
+    ## temperature_change_from_ghg                       0.876
+    ## temperature_change_from_n2o                       0.882
+    ## total_ghg                                         0.813
+    ## total_ghg_excluding_lucf                          0.857
+    ##                                      ghg_excluding_lucf_per_capita
+    ## year                                                         0.249
+    ## population                                                   0.036
+    ## cement_co2                                                   0.056
+    ## cement_co2_per_capita                                        0.454
+    ## co2                                                          0.077
+    ## co2_growth_abs                                               0.050
+    ## co2_growth_prct                                              0.008
+    ## co2_per_capita                                               0.386
+    ## cumulative_cement_co2                                        0.070
+    ## cumulative_co2                                               0.109
+    ## cumulative_luc_co2                                           0.084
+    ## cumulative_oil_co2                                           0.100
+    ## ghg_excluding_lucf_per_capita                                1.000
+    ## ghg_per_capita                                               0.673
+    ## land_use_change_co2                                          0.022
+    ## land_use_change_co2_per_capita                              -0.043
+    ## methane                                                      0.064
+    ## methane_per_capita                                           0.752
+    ## nitrous_oxide                                                0.071
+    ## nitrous_oxide_per_capita                                     0.148
+    ## oil_co2                                                      0.109
+    ## share_global_co2                                             0.037
+    ## share_global_cumulative_co2                                  0.042
+    ## share_global_cumulative_luc_co2                              0.056
+    ## share_global_luc_co2                                         0.017
+    ## share_of_temperature_change_from_ghg                         0.061
+    ## temperature_change_from_ch4                                  0.074
+    ## temperature_change_from_co2                                  0.092
+    ## temperature_change_from_ghg                                  0.087
+    ## temperature_change_from_n2o                                  0.075
+    ## total_ghg                                                    0.081
+    ## total_ghg_excluding_lucf                                     0.095
+    ##                                      ghg_per_capita land_use_change_co2
+    ## year                                          0.132               0.068
+    ## population                                   -0.006               0.646
+    ## cement_co2                                    0.015               0.393
+    ## cement_co2_per_capita                         0.252               0.026
+    ## co2                                           0.028               0.434
+    ## co2_growth_abs                                0.024               0.376
+    ## co2_growth_prct                               0.015              -0.003
+    ## co2_per_capita                                0.250               0.003
+    ## cumulative_cement_co2                         0.023               0.345
+    ## cumulative_co2                                0.050               0.418
+    ## cumulative_luc_co2                            0.050               0.802
+    ## cumulative_oil_co2                            0.045               0.362
+    ## ghg_excluding_lucf_per_capita                 0.673               0.022
+    ## ghg_per_capita                                1.000               0.045
+    ## land_use_change_co2                           0.045               1.000
+    ## land_use_change_co2_per_capita                0.570               0.068
+    ## methane                                       0.021               0.735
+    ## methane_per_capita                            0.691              -0.001
+    ## nitrous_oxide                                 0.030               0.638
+    ## nitrous_oxide_per_capita                      0.500               0.000
+    ## oil_co2                                       0.051               0.475
+    ## share_global_co2                              0.017               0.471
+    ## share_global_cumulative_co2                   0.015               0.435
+    ## share_global_cumulative_luc_co2               0.059               0.906
+    ## share_global_luc_co2                          0.048               0.968
+    ## share_of_temperature_change_from_ghg          0.051               0.793
+    ## temperature_change_from_ch4                   0.029               0.633
+    ## temperature_change_from_co2                   0.045               0.556
+    ## temperature_change_from_ghg                   0.041               0.581
+    ## temperature_change_from_n2o                   0.030               0.536
+    ## total_ghg                                     0.040               0.674
+    ## total_ghg_excluding_lucf                      0.040               0.521
+    ##                                      land_use_change_co2_per_capita methane
+    ## year                                                         -0.028   0.133
+    ## population                                                   -0.033   0.898
+    ## cement_co2                                                   -0.029   0.793
+    ## cement_co2_per_capita                                        -0.093   0.128
+    ## co2                                                          -0.040   0.755
+    ## co2_growth_abs                                               -0.011   0.507
+    ## co2_growth_prct                                               0.017  -0.003
+    ## co2_per_capita                                               -0.037   0.032
+    ## cumulative_cement_co2                                        -0.033   0.775
+    ## cumulative_co2                                               -0.036   0.800
+    ## cumulative_luc_co2                                           -0.002   0.925
+    ## cumulative_oil_co2                                           -0.032   0.758
+    ## ghg_excluding_lucf_per_capita                                -0.043   0.064
+    ## ghg_per_capita                                                0.570   0.021
+    ## land_use_change_co2                                           0.068   0.735
+    ## land_use_change_co2_per_capita                                1.000  -0.029
+    ## methane                                                      -0.029   1.000
+    ## methane_per_capita                                            0.088   0.003
+    ## nitrous_oxide                                                -0.029   0.978
+    ## nitrous_oxide_per_capita                                      0.206   0.006
+    ## oil_co2                                                      -0.034   0.861
+    ## share_global_co2                                             -0.023   0.437
+    ## share_global_cumulative_co2                                  -0.029   0.415
+    ## share_global_cumulative_luc_co2                               0.051   0.742
+    ## share_global_luc_co2                                          0.078   0.698
+    ## share_of_temperature_change_from_ghg                          0.015   0.776
+    ## temperature_change_from_ch4                                  -0.030   0.979
+    ## temperature_change_from_co2                                  -0.027   0.911
+    ## temperature_change_from_ghg                                  -0.028   0.939
+    ## temperature_change_from_n2o                                  -0.033   0.923
+    ## total_ghg                                                    -0.021   0.981
+    ## total_ghg_excluding_lucf                                     -0.035   0.933
+    ##                                      methane_per_capita nitrous_oxide
+    ## year                                              0.115         0.148
+    ## population                                       -0.013         0.857
+    ## cement_co2                                       -0.002         0.788
+    ## cement_co2_per_capita                             0.179         0.143
+    ## co2                                              -0.002         0.766
+    ## co2_growth_abs                                    0.003         0.486
+    ## co2_growth_prct                                   0.001        -0.003
+    ## co2_per_capita                                    0.193         0.039
+    ## cumulative_cement_co2                            -0.001         0.789
+    ## cumulative_co2                                    0.007         0.834
+    ## cumulative_luc_co2                                0.006         0.892
+    ## cumulative_oil_co2                                0.006         0.796
+    ## ghg_excluding_lucf_per_capita                     0.752         0.071
+    ## ghg_per_capita                                    0.691         0.030
+    ## land_use_change_co2                              -0.001         0.638
+    ## land_use_change_co2_per_capita                    0.088        -0.029
+    ## methane                                           0.003         0.978
+    ## methane_per_capita                                1.000         0.003
+    ## nitrous_oxide                                     0.003         1.000
+    ## nitrous_oxide_per_capita                          0.306         0.028
+    ## oil_co2                                           0.009         0.896
+    ## share_global_co2                                 -0.009         0.394
+    ## share_global_cumulative_co2                      -0.009         0.379
+    ## share_global_cumulative_luc_co2                   0.002         0.656
+    ## share_global_luc_co2                             -0.002         0.595
+    ## share_of_temperature_change_from_ghg              0.002         0.716
+    ## temperature_change_from_ch4                       0.006         0.987
+    ## temperature_change_from_co2                       0.004         0.944
+    ## temperature_change_from_ghg                       0.005         0.966
+    ## temperature_change_from_n2o                       0.002         0.960
+    ## total_ghg                                         0.003         0.982
+    ## total_ghg_excluding_lucf                          0.005         0.962
+    ##                                      nitrous_oxide_per_capita oil_co2
+    ## year                                                    0.146   0.136
+    ## population                                             -0.012   0.794
+    ## cement_co2                                              0.005   0.790
+    ## cement_co2_per_capita                                   0.124   0.179
+    ## co2                                                     0.008   0.818
+    ## co2_growth_abs                                          0.005   0.444
+    ## co2_growth_prct                                        -0.001  -0.002
+    ## co2_per_capita                                          0.057   0.063
+    ## cumulative_cement_co2                                   0.011   0.848
+    ## cumulative_co2                                          0.025   0.941
+    ## cumulative_luc_co2                                      0.019   0.850
+    ## cumulative_oil_co2                                      0.024   0.928
+    ## ghg_excluding_lucf_per_capita                           0.148   0.109
+    ## ghg_per_capita                                          0.500   0.051
+    ## land_use_change_co2                                     0.000   0.475
+    ## land_use_change_co2_per_capita                          0.206  -0.034
+    ## methane                                                 0.006   0.861
+    ## methane_per_capita                                      0.306   0.009
+    ## nitrous_oxide                                           0.028   0.896
+    ## nitrous_oxide_per_capita                                1.000   0.028
+    ## oil_co2                                                 0.028   1.000
+    ## share_global_co2                                       -0.017   0.354
+    ## share_global_cumulative_co2                            -0.016   0.357
+    ## share_global_cumulative_luc_co2                         0.003   0.553
+    ## share_global_luc_co2                                   -0.004   0.438
+    ## share_of_temperature_change_from_ghg                    0.007   0.565
+    ## temperature_change_from_ch4                             0.015   0.905
+    ## temperature_change_from_co2                             0.020   0.894
+    ## temperature_change_from_ghg                             0.019   0.906
+    ## temperature_change_from_n2o                             0.023   0.895
+    ## total_ghg                                               0.014   0.894
+    ## total_ghg_excluding_lucf                                0.016   0.917
+    ##                                      share_global_co2
+    ## year                                           -0.131
+    ## population                                      0.341
+    ## cement_co2                                      0.271
+    ## cement_co2_per_capita                           0.023
+    ## co2                                             0.331
+    ## co2_growth_abs                                  0.232
+    ## co2_growth_prct                                -0.003
+    ## co2_per_capita                                  0.019
+    ## cumulative_cement_co2                           0.267
+    ## cumulative_co2                                  0.358
+    ## cumulative_luc_co2                              0.452
+    ## cumulative_oil_co2                              0.290
+    ## ghg_excluding_lucf_per_capita                   0.037
+    ## ghg_per_capita                                  0.017
+    ## land_use_change_co2                             0.471
+    ## land_use_change_co2_per_capita                 -0.023
+    ## methane                                         0.437
+    ## methane_per_capita                             -0.009
+    ## nitrous_oxide                                   0.394
+    ## nitrous_oxide_per_capita                       -0.017
+    ## oil_co2                                         0.354
+    ## share_global_co2                                1.000
+    ## share_global_cumulative_co2                     0.990
+    ## share_global_cumulative_luc_co2                 0.571
+    ## share_global_luc_co2                            0.502
+    ## share_of_temperature_change_from_ghg            0.567
+    ## temperature_change_from_ch4                     0.379
+    ## temperature_change_from_co2                     0.383
+    ## temperature_change_from_ghg                     0.384
+    ## temperature_change_from_n2o                     0.350
+    ## total_ghg                                       0.434
+    ## total_ghg_excluding_lucf                        0.384
+    ##                                      share_global_cumulative_co2
+    ## year                                                      -0.124
+    ## population                                                 0.304
+    ## cement_co2                                                 0.236
+    ## cement_co2_per_capita                                      0.024
+    ## co2                                                        0.325
+    ## co2_growth_abs                                             0.198
+    ## co2_growth_prct                                           -0.003
+    ## co2_per_capita                                             0.023
+    ## cumulative_cement_co2                                      0.256
+    ## cumulative_co2                                             0.379
+    ## cumulative_luc_co2                                         0.433
+    ## cumulative_oil_co2                                         0.306
+    ## ghg_excluding_lucf_per_capita                              0.042
+    ## ghg_per_capita                                             0.015
+    ## land_use_change_co2                                        0.435
+    ## land_use_change_co2_per_capita                            -0.029
+    ## methane                                                    0.415
+    ## methane_per_capita                                        -0.009
+    ## nitrous_oxide                                              0.379
+    ## nitrous_oxide_per_capita                                  -0.016
+    ## oil_co2                                                    0.357
+    ## share_global_co2                                           0.990
+    ## share_global_cumulative_co2                                1.000
+    ## share_global_cumulative_luc_co2                            0.550
+    ## share_global_luc_co2                                       0.467
+    ## share_of_temperature_change_from_ghg                       0.560
+    ## temperature_change_from_ch4                                0.362
+    ## temperature_change_from_co2                                0.387
+    ## temperature_change_from_ghg                                0.383
+    ## temperature_change_from_n2o                                0.349
+    ## total_ghg                                                  0.418
+    ## total_ghg_excluding_lucf                                   0.375
+    ##                                      share_global_cumulative_luc_co2
+    ## year                                                           0.052
+    ## population                                                     0.602
+    ## cement_co2                                                     0.426
+    ## cement_co2_per_capita                                          0.055
+    ## co2                                                            0.503
+    ## co2_growth_abs                                                 0.358
+    ## co2_growth_prct                                               -0.003
+    ## co2_per_capita                                                 0.027
+    ## cumulative_cement_co2                                          0.417
+    ## cumulative_co2                                                 0.533
+    ## cumulative_luc_co2                                             0.810
+    ## cumulative_oil_co2                                             0.459
+    ## ghg_excluding_lucf_per_capita                                  0.056
+    ## ghg_per_capita                                                 0.059
+    ## land_use_change_co2                                            0.906
+    ## land_use_change_co2_per_capita                                 0.051
+    ## methane                                                        0.742
+    ## methane_per_capita                                             0.002
+    ## nitrous_oxide                                                  0.656
+    ## nitrous_oxide_per_capita                                       0.003
+    ## oil_co2                                                        0.553
+    ## share_global_co2                                               0.571
+    ## share_global_cumulative_co2                                    0.550
+    ## share_global_cumulative_luc_co2                                1.000
+    ## share_global_luc_co2                                           0.944
+    ## share_of_temperature_change_from_ghg                           0.905
+    ## temperature_change_from_ch4                                    0.643
+    ## temperature_change_from_co2                                    0.623
+    ## temperature_change_from_ghg                                    0.632
+    ## temperature_change_from_n2o                                    0.580
+    ## total_ghg                                                      0.711
+    ## total_ghg_excluding_lucf                                       0.592
+    ##                                      share_global_luc_co2
+    ## year                                                0.042
+    ## population                                          0.603
+    ## cement_co2                                          0.376
+    ## cement_co2_per_capita                               0.016
+    ## co2                                                 0.406
+    ## co2_growth_abs                                      0.339
+    ## co2_growth_prct                                    -0.003
+    ## co2_per_capita                                      0.000
+    ## cumulative_cement_co2                               0.337
+    ## cumulative_co2                                      0.394
+    ## cumulative_luc_co2                                  0.743
+    ## cumulative_oil_co2                                  0.343
+    ## ghg_excluding_lucf_per_capita                       0.017
+    ## ghg_per_capita                                      0.048
+    ## land_use_change_co2                                 0.968
+    ## land_use_change_co2_per_capita                      0.078
+    ## methane                                             0.698
+    ## methane_per_capita                                 -0.002
+    ## nitrous_oxide                                       0.595
+    ## nitrous_oxide_per_capita                           -0.004
+    ## oil_co2                                             0.438
+    ## share_global_co2                                    0.502
+    ## share_global_cumulative_co2                         0.467
+    ## share_global_cumulative_luc_co2                     0.944
+    ## share_global_luc_co2                                1.000
+    ## share_of_temperature_change_from_ghg                0.826
+    ## temperature_change_from_ch4                         0.587
+    ## temperature_change_from_co2                         0.518
+    ## temperature_change_from_ghg                         0.540
+    ## temperature_change_from_n2o                         0.500
+    ## total_ghg                                           0.639
+    ## total_ghg_excluding_lucf                            0.489
+    ##                                      share_of_temperature_change_from_ghg
+    ## year                                                                0.053
+    ## population                                                          0.547
+    ## cement_co2                                                          0.412
+    ## cement_co2_per_capita                                               0.058
+    ## co2                                                                 0.508
+    ## co2_growth_abs                                                      0.333
+    ## co2_growth_prct                                                    -0.003
+    ## co2_per_capita                                                      0.031
+    ## cumulative_cement_co2                                               0.424
+    ## cumulative_co2                                                      0.563
+    ## cumulative_luc_co2                                                  0.744
+    ## cumulative_oil_co2                                                  0.480
+    ## ghg_excluding_lucf_per_capita                                       0.061
+    ## ghg_per_capita                                                      0.051
+    ## land_use_change_co2                                                 0.793
+    ## land_use_change_co2_per_capita                                      0.015
+    ## methane                                                             0.776
+    ## methane_per_capita                                                  0.002
+    ## nitrous_oxide                                                       0.716
+    ## nitrous_oxide_per_capita                                            0.007
+    ## oil_co2                                                             0.565
+    ## share_global_co2                                                    0.567
+    ## share_global_cumulative_co2                                         0.560
+    ## share_global_cumulative_luc_co2                                     0.905
+    ## share_global_luc_co2                                                0.826
+    ## share_of_temperature_change_from_ghg                                1.000
+    ## temperature_change_from_ch4                                         0.682
+    ## temperature_change_from_co2                                         0.709
+    ## temperature_change_from_ghg                                         0.707
+    ## temperature_change_from_n2o                                         0.653
+    ## total_ghg                                                           0.773
+    ## total_ghg_excluding_lucf                                            0.675
+    ##                                      temperature_change_from_ch4
+    ## year                                                       0.150
+    ## population                                                 0.888
+    ## cement_co2                                                 0.830
+    ## cement_co2_per_capita                                      0.143
+    ## co2                                                        0.784
+    ## co2_growth_abs                                             0.481
+    ## co2_growth_prct                                           -0.003
+    ## co2_per_capita                                             0.039
+    ## cumulative_cement_co2                                      0.837
+    ## cumulative_co2                                             0.855
+    ## cumulative_luc_co2                                         0.908
+    ## cumulative_oil_co2                                         0.830
+    ## ghg_excluding_lucf_per_capita                              0.074
+    ## ghg_per_capita                                             0.029
+    ## land_use_change_co2                                        0.633
+    ## land_use_change_co2_per_capita                            -0.030
+    ## methane                                                    0.979
+    ## methane_per_capita                                         0.006
+    ## nitrous_oxide                                              0.987
+    ## nitrous_oxide_per_capita                                   0.015
+    ## oil_co2                                                    0.905
+    ## share_global_co2                                           0.379
+    ## share_global_cumulative_co2                                0.362
+    ## share_global_cumulative_luc_co2                            0.643
+    ## share_global_luc_co2                                       0.587
+    ## share_of_temperature_change_from_ghg                       0.682
+    ## temperature_change_from_ch4                                1.000
+    ## temperature_change_from_co2                                0.948
+    ## temperature_change_from_ghg                                0.972
+    ## temperature_change_from_n2o                                0.966
+    ## total_ghg                                                  0.982
+    ## total_ghg_excluding_lucf                                   0.966
+    ##                                      temperature_change_from_co2
+    ## year                                                       0.147
+    ## population                                                 0.750
+    ## cement_co2                                                 0.731
+    ## cement_co2_per_capita                                      0.143
+    ## co2                                                        0.761
+    ## co2_growth_abs                                             0.388
+    ## co2_growth_prct                                           -0.003
+    ## co2_per_capita                                             0.053
+    ## cumulative_cement_co2                                      0.809
+    ## cumulative_co2                                             0.908
+    ## cumulative_luc_co2                                         0.860
+    ## cumulative_oil_co2                                         0.879
+    ## ghg_excluding_lucf_per_capita                              0.092
+    ## ghg_per_capita                                             0.045
+    ## land_use_change_co2                                        0.556
+    ## land_use_change_co2_per_capita                            -0.027
+    ## methane                                                    0.911
+    ## methane_per_capita                                         0.004
+    ## nitrous_oxide                                              0.944
+    ## nitrous_oxide_per_capita                                   0.020
+    ## oil_co2                                                    0.894
+    ## share_global_co2                                           0.383
+    ## share_global_cumulative_co2                                0.387
+    ## share_global_cumulative_luc_co2                            0.623
+    ## share_global_luc_co2                                       0.518
+    ## share_of_temperature_change_from_ghg                       0.709
+    ## temperature_change_from_ch4                                0.948
+    ## temperature_change_from_co2                                1.000
+    ## temperature_change_from_ghg                                0.996
+    ## temperature_change_from_n2o                                0.981
+    ## total_ghg                                                  0.959
+    ## total_ghg_excluding_lucf                                   0.967
+    ##                                      temperature_change_from_ghg
+    ## year                                                       0.150
+    ## population                                                 0.796
+    ## cement_co2                                                 0.767
+    ## cement_co2_per_capita                                      0.144
+    ## co2                                                        0.775
+    ## co2_growth_abs                                             0.417
+    ## co2_growth_prct                                           -0.003
+    ## co2_per_capita                                             0.050
+    ## cumulative_cement_co2                                      0.827
+    ## cumulative_co2                                             0.904
+    ## cumulative_luc_co2                                         0.881
+    ## cumulative_oil_co2                                         0.876
+    ## ghg_excluding_lucf_per_capita                              0.087
+    ## ghg_per_capita                                             0.041
+    ## land_use_change_co2                                        0.581
+    ## land_use_change_co2_per_capita                            -0.028
+    ## methane                                                    0.939
+    ## methane_per_capita                                         0.005
+    ## nitrous_oxide                                              0.966
+    ## nitrous_oxide_per_capita                                   0.019
+    ## oil_co2                                                    0.906
+    ## share_global_co2                                           0.384
+    ## share_global_cumulative_co2                                0.383
+    ## share_global_cumulative_luc_co2                            0.632
+    ## share_global_luc_co2                                       0.540
+    ## share_of_temperature_change_from_ghg                       0.707
+    ## temperature_change_from_ch4                                0.972
+    ## temperature_change_from_co2                                0.996
+    ## temperature_change_from_ghg                                1.000
+    ## temperature_change_from_n2o                                0.988
+    ## total_ghg                                                  0.975
+    ## total_ghg_excluding_lucf                                   0.977
+    ##                                      temperature_change_from_n2o total_ghg
+    ## year                                                       0.148     0.136
+    ## population                                                 0.807     0.847
+    ## cement_co2                                                 0.780     0.812
+    ## cement_co2_per_capita                                      0.138     0.146
+    ## co2                                                        0.766     0.783
+    ## co2_growth_abs                                             0.402     0.492
+    ## co2_growth_prct                                           -0.003    -0.003
+    ## co2_per_capita                                             0.044     0.044
+    ## cumulative_cement_co2                                      0.848     0.816
+    ## cumulative_co2                                             0.901     0.853
+    ## cumulative_luc_co2                                         0.844     0.908
+    ## cumulative_oil_co2                                         0.882     0.813
+    ## ghg_excluding_lucf_per_capita                              0.075     0.081
+    ## ghg_per_capita                                             0.030     0.040
+    ## land_use_change_co2                                        0.536     0.674
+    ## land_use_change_co2_per_capita                            -0.033    -0.021
+    ## methane                                                    0.923     0.981
+    ## methane_per_capita                                         0.002     0.003
+    ## nitrous_oxide                                              0.960     0.982
+    ## nitrous_oxide_per_capita                                   0.023     0.014
+    ## oil_co2                                                    0.895     0.894
+    ## share_global_co2                                           0.350     0.434
+    ## share_global_cumulative_co2                                0.349     0.418
+    ## share_global_cumulative_luc_co2                            0.580     0.711
+    ## share_global_luc_co2                                       0.500     0.639
+    ## share_of_temperature_change_from_ghg                       0.653     0.773
+    ## temperature_change_from_ch4                                0.966     0.982
+    ## temperature_change_from_co2                                0.981     0.959
+    ## temperature_change_from_ghg                                0.988     0.975
+    ## temperature_change_from_n2o                                1.000     0.955
+    ## total_ghg                                                  0.955     1.000
+    ## total_ghg_excluding_lucf                                   0.963     0.978
+    ##                                      total_ghg_excluding_lucf
+    ## year                                                    0.140
+    ## population                                              0.807
+    ## cement_co2                                              0.843
+    ## cement_co2_per_capita                                   0.168
+    ## co2                                                     0.799
+    ## co2_growth_abs                                          0.471
+    ## co2_growth_prct                                        -0.003
+    ## co2_per_capita                                          0.054
+    ## cumulative_cement_co2                                   0.862
+    ## cumulative_co2                                          0.889
+    ## cumulative_luc_co2                                      0.846
+    ## cumulative_oil_co2                                      0.857
+    ## ghg_excluding_lucf_per_capita                           0.095
+    ## ghg_per_capita                                          0.040
+    ## land_use_change_co2                                     0.521
+    ## land_use_change_co2_per_capita                         -0.035
+    ## methane                                                 0.933
+    ## methane_per_capita                                      0.005
+    ## nitrous_oxide                                           0.962
+    ## nitrous_oxide_per_capita                                0.016
+    ## oil_co2                                                 0.917
+    ## share_global_co2                                        0.384
+    ## share_global_cumulative_co2                             0.375
+    ## share_global_cumulative_luc_co2                         0.592
+    ## share_global_luc_co2                                    0.489
+    ## share_of_temperature_change_from_ghg                    0.675
+    ## temperature_change_from_ch4                             0.966
+    ## temperature_change_from_co2                             0.967
+    ## temperature_change_from_ghg                             0.977
+    ## temperature_change_from_n2o                             0.963
+    ## total_ghg                                               0.978
+    ## total_ghg_excluding_lucf                                1.000
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-54.png)<!-- -->
+
+    ## 
+    ## Strong correlations (|r| > 0.7) in Dataset 2 :
+    ## cement_co2 - population: 0.824
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-55.png)<!-- -->
+
+    ## co2 - population: 0.703
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-56.png)<!-- -->
+
+    ## cumulative_cement_co2 - population: 0.779
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-57.png)<!-- -->
+
+    ## cumulative_co2 - population: 0.716
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-58.png)<!-- -->
+
+    ## cumulative_luc_co2 - population: 0.832
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-59.png)<!-- -->
+
+    ## cumulative_oil_co2 - population: 0.707
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-60.png)<!-- -->
+
+    ## methane - population: 0.898
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-61.png)<!-- -->
+
+    ## nitrous_oxide - population: 0.857
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-62.png)<!-- -->
+
+    ## oil_co2 - population: 0.794
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-63.png)<!-- -->
+
+    ## temperature_change_from_ch4 - population: 0.888
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-64.png)<!-- -->
+
+    ## temperature_change_from_co2 - population: 0.750
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-65.png)<!-- -->
+
+    ## temperature_change_from_ghg - population: 0.796
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-66.png)<!-- -->
+
+    ## temperature_change_from_n2o - population: 0.807
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-67.png)<!-- -->
+
+    ## total_ghg - population: 0.847
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-68.png)<!-- -->
+
+    ## total_ghg_excluding_lucf - population: 0.807
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-69.png)<!-- -->
+
+    ## population - cement_co2: 0.824
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-70.png)<!-- -->
+
+    ## co2 - cement_co2: 0.751
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-71.png)<!-- -->
+
+    ## cumulative_cement_co2 - cement_co2: 0.941
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-72.png)<!-- -->
+
+    ## cumulative_co2 - cement_co2: 0.764
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-73.png)<!-- -->
+
+    ## cumulative_luc_co2 - cement_co2: 0.708
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-74.png)<!-- -->
+
+    ## cumulative_oil_co2 - cement_co2: 0.753
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-75.png)<!-- -->
+
+    ## methane - cement_co2: 0.793
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-76.png)<!-- -->
+
+    ## nitrous_oxide - cement_co2: 0.788
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-77.png)<!-- -->
+
+    ## oil_co2 - cement_co2: 0.790
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-78.png)<!-- -->
+
+    ## temperature_change_from_ch4 - cement_co2: 0.830
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-79.png)<!-- -->
+
+    ## temperature_change_from_co2 - cement_co2: 0.731
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-80.png)<!-- -->
+
+    ## temperature_change_from_ghg - cement_co2: 0.767
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-81.png)<!-- -->
+
+    ## temperature_change_from_n2o - cement_co2: 0.780
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-82.png)<!-- -->
+
+    ## total_ghg - cement_co2: 0.812
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-83.png)<!-- -->
+
+    ## total_ghg_excluding_lucf - cement_co2: 0.843
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-84.png)<!-- -->
+
+    ## population - co2: 0.703
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-85.png)<!-- -->
+
+    ## cement_co2 - co2: 0.751
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-86.png)<!-- -->
+
+    ## cumulative_cement_co2 - co2: 0.773
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-87.png)<!-- -->
+
+    ## cumulative_co2 - co2: 0.797
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-88.png)<!-- -->
+
+    ## cumulative_luc_co2 - co2: 0.737
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-89.png)<!-- -->
+
+    ## cumulative_oil_co2 - co2: 0.771
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-90.png)<!-- -->
+
+    ## methane - co2: 0.755
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-91.png)<!-- -->
+
+    ## nitrous_oxide - co2: 0.766
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-92.png)<!-- -->
+
+    ## oil_co2 - co2: 0.818
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-93.png)<!-- -->
+
+    ## temperature_change_from_ch4 - co2: 0.784
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-94.png)<!-- -->
+
+    ## temperature_change_from_co2 - co2: 0.761
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-95.png)<!-- -->
+
+    ## temperature_change_from_ghg - co2: 0.775
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-96.png)<!-- -->
+
+    ## temperature_change_from_n2o - co2: 0.766
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-97.png)<!-- -->
+
+    ## total_ghg - co2: 0.783
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-98.png)<!-- -->
+
+    ## total_ghg_excluding_lucf - co2: 0.799
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-99.png)<!-- -->
+
+    ## population - cumulative_cement_co2: 0.779
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-100.png)<!-- -->
+
+    ## cement_co2 - cumulative_cement_co2: 0.941
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-101.png)<!-- -->
+
+    ## co2 - cumulative_cement_co2: 0.773
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-102.png)<!-- -->
+
+    ## cumulative_co2 - cumulative_cement_co2: 0.892
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-103.png)<!-- -->
+
+    ## cumulative_luc_co2 - cumulative_cement_co2: 0.711
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-104.png)<!-- -->
+
+    ## cumulative_oil_co2 - cumulative_cement_co2: 0.893
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-105.png)<!-- -->
+
+    ## methane - cumulative_cement_co2: 0.775
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-106.png)<!-- -->
+
+    ## nitrous_oxide - cumulative_cement_co2: 0.789
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-107.png)<!-- -->
+
+    ## oil_co2 - cumulative_cement_co2: 0.848
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-108.png)<!-- -->
+
+    ## temperature_change_from_ch4 - cumulative_cement_co2: 0.837
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-109.png)<!-- -->
+
+    ## temperature_change_from_co2 - cumulative_cement_co2: 0.809
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-110.png)<!-- -->
+
+    ## temperature_change_from_ghg - cumulative_cement_co2: 0.827
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-111.png)<!-- -->
+
+    ## temperature_change_from_n2o - cumulative_cement_co2: 0.848
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-112.png)<!-- -->
+
+    ## total_ghg - cumulative_cement_co2: 0.816
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-113.png)<!-- -->
+
+    ## total_ghg_excluding_lucf - cumulative_cement_co2: 0.862
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-114.png)<!-- -->
+
+    ## population - cumulative_co2: 0.716
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-115.png)<!-- -->
+
+    ## cement_co2 - cumulative_co2: 0.764
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-116.png)<!-- -->
+
+    ## co2 - cumulative_co2: 0.797
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-117.png)<!-- -->
+
+    ## cumulative_cement_co2 - cumulative_co2: 0.892
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-118.png)<!-- -->
+
+    ## cumulative_luc_co2 - cumulative_co2: 0.803
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-119.png)<!-- -->
+
+    ## cumulative_oil_co2 - cumulative_co2: 0.979
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-120.png)<!-- -->
+
+    ## methane - cumulative_co2: 0.800
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-121.png)<!-- -->
+
+    ## nitrous_oxide - cumulative_co2: 0.834
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-122.png)<!-- -->
+
+    ## oil_co2 - cumulative_co2: 0.941
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-123.png)<!-- -->
+
+    ## temperature_change_from_ch4 - cumulative_co2: 0.855
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-124.png)<!-- -->
+
+    ## temperature_change_from_co2 - cumulative_co2: 0.908
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-125.png)<!-- -->
+
+    ## temperature_change_from_ghg - cumulative_co2: 0.904
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-126.png)<!-- -->
+
+    ## temperature_change_from_n2o - cumulative_co2: 0.901
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-127.png)<!-- -->
+
+    ## total_ghg - cumulative_co2: 0.853
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-128.png)<!-- -->
+
+    ## total_ghg_excluding_lucf - cumulative_co2: 0.889
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-129.png)<!-- -->
+
+    ## population - cumulative_luc_co2: 0.832
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-130.png)<!-- -->
+
+    ## cement_co2 - cumulative_luc_co2: 0.708
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-131.png)<!-- -->
+
+    ## co2 - cumulative_luc_co2: 0.737
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-132.png)<!-- -->
+
+    ## cumulative_cement_co2 - cumulative_luc_co2: 0.711
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-133.png)<!-- -->
+
+    ## cumulative_co2 - cumulative_luc_co2: 0.803
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-134.png)<!-- -->
+
+    ## cumulative_oil_co2 - cumulative_luc_co2: 0.755
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-135.png)<!-- -->
+
+    ## land_use_change_co2 - cumulative_luc_co2: 0.802
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-136.png)<!-- -->
+
+    ## methane - cumulative_luc_co2: 0.925
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-137.png)<!-- -->
+
+    ## nitrous_oxide - cumulative_luc_co2: 0.892
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-138.png)<!-- -->
+
+    ## oil_co2 - cumulative_luc_co2: 0.850
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-139.png)<!-- -->
+
+    ## share_global_cumulative_luc_co2 - cumulative_luc_co2: 0.810
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-140.png)<!-- -->
+
+    ## share_global_luc_co2 - cumulative_luc_co2: 0.743
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-141.png)<!-- -->
+
+    ## share_of_temperature_change_from_ghg - cumulative_luc_co2: 0.744
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-142.png)<!-- -->
+
+    ## temperature_change_from_ch4 - cumulative_luc_co2: 0.908
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-143.png)<!-- -->
+
+    ## temperature_change_from_co2 - cumulative_luc_co2: 0.860
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-144.png)<!-- -->
+
+    ## temperature_change_from_ghg - cumulative_luc_co2: 0.881
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-145.png)<!-- -->
+
+    ## temperature_change_from_n2o - cumulative_luc_co2: 0.844
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-146.png)<!-- -->
+
+    ## total_ghg - cumulative_luc_co2: 0.908
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-147.png)<!-- -->
+
+    ## total_ghg_excluding_lucf - cumulative_luc_co2: 0.846
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-148.png)<!-- -->
+
+    ## population - cumulative_oil_co2: 0.707
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-149.png)<!-- -->
+
+    ## cement_co2 - cumulative_oil_co2: 0.753
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-150.png)<!-- -->
+
+    ## co2 - cumulative_oil_co2: 0.771
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-151.png)<!-- -->
+
+    ## cumulative_cement_co2 - cumulative_oil_co2: 0.893
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-152.png)<!-- -->
+
+    ## cumulative_co2 - cumulative_oil_co2: 0.979
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-153.png)<!-- -->
+
+    ## cumulative_luc_co2 - cumulative_oil_co2: 0.755
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-154.png)<!-- -->
+
+    ## methane - cumulative_oil_co2: 0.758
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-155.png)<!-- -->
+
+    ## nitrous_oxide - cumulative_oil_co2: 0.796
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-156.png)<!-- -->
+
+    ## oil_co2 - cumulative_oil_co2: 0.928
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-157.png)<!-- -->
+
+    ## temperature_change_from_ch4 - cumulative_oil_co2: 0.830
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-158.png)<!-- -->
+
+    ## temperature_change_from_co2 - cumulative_oil_co2: 0.879
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-159.png)<!-- -->
+
+    ## temperature_change_from_ghg - cumulative_oil_co2: 0.876
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-160.png)<!-- -->
+
+    ## temperature_change_from_n2o - cumulative_oil_co2: 0.882
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-161.png)<!-- -->
+
+    ## total_ghg - cumulative_oil_co2: 0.813
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-162.png)<!-- -->
+
+    ## total_ghg_excluding_lucf - cumulative_oil_co2: 0.857
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-163.png)<!-- -->
+
+    ## methane_per_capita - ghg_excluding_lucf_per_capita: 0.752
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-164.png)<!-- -->
+
+    ## cumulative_luc_co2 - land_use_change_co2: 0.802
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-165.png)<!-- -->
+
+    ## methane - land_use_change_co2: 0.735
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-166.png)<!-- -->
+
+    ## share_global_cumulative_luc_co2 - land_use_change_co2: 0.906
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-167.png)<!-- -->
+
+    ## share_global_luc_co2 - land_use_change_co2: 0.968
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-168.png)<!-- -->
+
+    ## share_of_temperature_change_from_ghg - land_use_change_co2: 0.793
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-169.png)<!-- -->
+
+    ## population - methane: 0.898
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-170.png)<!-- -->
+
+    ## cement_co2 - methane: 0.793
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-171.png)<!-- -->
+
+    ## co2 - methane: 0.755
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-172.png)<!-- -->
+
+    ## cumulative_cement_co2 - methane: 0.775
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-173.png)<!-- -->
+
+    ## cumulative_co2 - methane: 0.800
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-174.png)<!-- -->
+
+    ## cumulative_luc_co2 - methane: 0.925
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-175.png)<!-- -->
+
+    ## cumulative_oil_co2 - methane: 0.758
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-176.png)<!-- -->
+
+    ## land_use_change_co2 - methane: 0.735
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-177.png)<!-- -->
+
+    ## nitrous_oxide - methane: 0.978
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-178.png)<!-- -->
+
+    ## oil_co2 - methane: 0.861
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-179.png)<!-- -->
+
+    ## share_global_cumulative_luc_co2 - methane: 0.742
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-180.png)<!-- -->
+
+    ## share_of_temperature_change_from_ghg - methane: 0.776
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-181.png)<!-- -->
+
+    ## temperature_change_from_ch4 - methane: 0.979
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-182.png)<!-- -->
+
+    ## temperature_change_from_co2 - methane: 0.911
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-183.png)<!-- -->
+
+    ## temperature_change_from_ghg - methane: 0.939
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-184.png)<!-- -->
+
+    ## temperature_change_from_n2o - methane: 0.923
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-185.png)<!-- -->
+
+    ## total_ghg - methane: 0.981
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-186.png)<!-- -->
+
+    ## total_ghg_excluding_lucf - methane: 0.933
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-187.png)<!-- -->
+
+    ## ghg_excluding_lucf_per_capita - methane_per_capita: 0.752
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-188.png)<!-- -->
+
+    ## population - nitrous_oxide: 0.857
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-189.png)<!-- -->
+
+    ## cement_co2 - nitrous_oxide: 0.788
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-190.png)<!-- -->
+
+    ## co2 - nitrous_oxide: 0.766
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-191.png)<!-- -->
+
+    ## cumulative_cement_co2 - nitrous_oxide: 0.789
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-192.png)<!-- -->
+
+    ## cumulative_co2 - nitrous_oxide: 0.834
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-193.png)<!-- -->
+
+    ## cumulative_luc_co2 - nitrous_oxide: 0.892
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-194.png)<!-- -->
+
+    ## cumulative_oil_co2 - nitrous_oxide: 0.796
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-195.png)<!-- -->
+
+    ## methane - nitrous_oxide: 0.978
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-196.png)<!-- -->
+
+    ## oil_co2 - nitrous_oxide: 0.896
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-197.png)<!-- -->
+
+    ## share_of_temperature_change_from_ghg - nitrous_oxide: 0.716
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-198.png)<!-- -->
+
+    ## temperature_change_from_ch4 - nitrous_oxide: 0.987
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-199.png)<!-- -->
+
+    ## temperature_change_from_co2 - nitrous_oxide: 0.944
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-200.png)<!-- -->
+
+    ## temperature_change_from_ghg - nitrous_oxide: 0.966
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-201.png)<!-- -->
+
+    ## temperature_change_from_n2o - nitrous_oxide: 0.960
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-202.png)<!-- -->
+
+    ## total_ghg - nitrous_oxide: 0.982
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-203.png)<!-- -->
+
+    ## total_ghg_excluding_lucf - nitrous_oxide: 0.962
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-204.png)<!-- -->
+
+    ## population - oil_co2: 0.794
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-205.png)<!-- -->
+
+    ## cement_co2 - oil_co2: 0.790
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-206.png)<!-- -->
+
+    ## co2 - oil_co2: 0.818
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-207.png)<!-- -->
+
+    ## cumulative_cement_co2 - oil_co2: 0.848
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-208.png)<!-- -->
+
+    ## cumulative_co2 - oil_co2: 0.941
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-209.png)<!-- -->
+
+    ## cumulative_luc_co2 - oil_co2: 0.850
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-210.png)<!-- -->
+
+    ## cumulative_oil_co2 - oil_co2: 0.928
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-211.png)<!-- -->
+
+    ## methane - oil_co2: 0.861
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-212.png)<!-- -->
+
+    ## nitrous_oxide - oil_co2: 0.896
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-213.png)<!-- -->
+
+    ## temperature_change_from_ch4 - oil_co2: 0.905
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-214.png)<!-- -->
+
+    ## temperature_change_from_co2 - oil_co2: 0.894
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-215.png)<!-- -->
+
+    ## temperature_change_from_ghg - oil_co2: 0.906
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-216.png)<!-- -->
+
+    ## temperature_change_from_n2o - oil_co2: 0.895
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-217.png)<!-- -->
+
+    ## total_ghg - oil_co2: 0.894
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-218.png)<!-- -->
+
+    ## total_ghg_excluding_lucf - oil_co2: 0.917
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-219.png)<!-- -->
+
+    ## share_global_cumulative_co2 - share_global_co2: 0.990
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-220.png)<!-- -->
+
+    ## share_global_co2 - share_global_cumulative_co2: 0.990
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-221.png)<!-- -->
+
+    ## cumulative_luc_co2 - share_global_cumulative_luc_co2: 0.810
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-222.png)<!-- -->
+
+    ## land_use_change_co2 - share_global_cumulative_luc_co2: 0.906
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-223.png)<!-- -->
+
+    ## methane - share_global_cumulative_luc_co2: 0.742
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-224.png)<!-- -->
+
+    ## share_global_luc_co2 - share_global_cumulative_luc_co2: 0.944
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-225.png)<!-- -->
+
+    ## share_of_temperature_change_from_ghg - share_global_cumulative_luc_co2: 0.905
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-226.png)<!-- -->
+
+    ## total_ghg - share_global_cumulative_luc_co2: 0.711
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-227.png)<!-- -->
+
+    ## cumulative_luc_co2 - share_global_luc_co2: 0.743
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-228.png)<!-- -->
+
+    ## land_use_change_co2 - share_global_luc_co2: 0.968
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-229.png)<!-- -->
+
+    ## share_global_cumulative_luc_co2 - share_global_luc_co2: 0.944
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-230.png)<!-- -->
+
+    ## share_of_temperature_change_from_ghg - share_global_luc_co2: 0.826
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-231.png)<!-- -->
+
+    ## cumulative_luc_co2 - share_of_temperature_change_from_ghg: 0.744
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-232.png)<!-- -->
+
+    ## land_use_change_co2 - share_of_temperature_change_from_ghg: 0.793
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-233.png)<!-- -->
+
+    ## methane - share_of_temperature_change_from_ghg: 0.776
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-234.png)<!-- -->
+
+    ## nitrous_oxide - share_of_temperature_change_from_ghg: 0.716
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-235.png)<!-- -->
+
+    ## share_global_cumulative_luc_co2 - share_of_temperature_change_from_ghg: 0.905
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-236.png)<!-- -->
+
+    ## share_global_luc_co2 - share_of_temperature_change_from_ghg: 0.826
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-237.png)<!-- -->
+
+    ## temperature_change_from_co2 - share_of_temperature_change_from_ghg: 0.709
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-238.png)<!-- -->
+
+    ## temperature_change_from_ghg - share_of_temperature_change_from_ghg: 0.707
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-239.png)<!-- -->
+
+    ## total_ghg - share_of_temperature_change_from_ghg: 0.773
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-240.png)<!-- -->
+
+    ## population - temperature_change_from_ch4: 0.888
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-241.png)<!-- -->
+
+    ## cement_co2 - temperature_change_from_ch4: 0.830
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-242.png)<!-- -->
+
+    ## co2 - temperature_change_from_ch4: 0.784
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-243.png)<!-- -->
+
+    ## cumulative_cement_co2 - temperature_change_from_ch4: 0.837
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-244.png)<!-- -->
+
+    ## cumulative_co2 - temperature_change_from_ch4: 0.855
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-245.png)<!-- -->
+
+    ## cumulative_luc_co2 - temperature_change_from_ch4: 0.908
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-246.png)<!-- -->
+
+    ## cumulative_oil_co2 - temperature_change_from_ch4: 0.830
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-247.png)<!-- -->
+
+    ## methane - temperature_change_from_ch4: 0.979
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-248.png)<!-- -->
+
+    ## nitrous_oxide - temperature_change_from_ch4: 0.987
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-249.png)<!-- -->
+
+    ## oil_co2 - temperature_change_from_ch4: 0.905
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-250.png)<!-- -->
+
+    ## temperature_change_from_co2 - temperature_change_from_ch4: 0.948
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-251.png)<!-- -->
+
+    ## temperature_change_from_ghg - temperature_change_from_ch4: 0.972
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-252.png)<!-- -->
+
+    ## temperature_change_from_n2o - temperature_change_from_ch4: 0.966
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-253.png)<!-- -->
+
+    ## total_ghg - temperature_change_from_ch4: 0.982
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-254.png)<!-- -->
+
+    ## total_ghg_excluding_lucf - temperature_change_from_ch4: 0.966
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-255.png)<!-- -->
+
+    ## population - temperature_change_from_co2: 0.750
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-256.png)<!-- -->
+
+    ## cement_co2 - temperature_change_from_co2: 0.731
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-257.png)<!-- -->
+
+    ## co2 - temperature_change_from_co2: 0.761
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-258.png)<!-- -->
+
+    ## cumulative_cement_co2 - temperature_change_from_co2: 0.809
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-259.png)<!-- -->
+
+    ## cumulative_co2 - temperature_change_from_co2: 0.908
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-260.png)<!-- -->
+
+    ## cumulative_luc_co2 - temperature_change_from_co2: 0.860
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-261.png)<!-- -->
+
+    ## cumulative_oil_co2 - temperature_change_from_co2: 0.879
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-262.png)<!-- -->
+
+    ## methane - temperature_change_from_co2: 0.911
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-263.png)<!-- -->
+
+    ## nitrous_oxide - temperature_change_from_co2: 0.944
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-264.png)<!-- -->
+
+    ## oil_co2 - temperature_change_from_co2: 0.894
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-265.png)<!-- -->
+
+    ## share_of_temperature_change_from_ghg - temperature_change_from_co2: 0.709
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-266.png)<!-- -->
+
+    ## temperature_change_from_ch4 - temperature_change_from_co2: 0.948
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-267.png)<!-- -->
+
+    ## temperature_change_from_ghg - temperature_change_from_co2: 0.996
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-268.png)<!-- -->
+
+    ## temperature_change_from_n2o - temperature_change_from_co2: 0.981
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-269.png)<!-- -->
+
+    ## total_ghg - temperature_change_from_co2: 0.959
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-270.png)<!-- -->
+
+    ## total_ghg_excluding_lucf - temperature_change_from_co2: 0.967
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-271.png)<!-- -->
+
+    ## population - temperature_change_from_ghg: 0.796
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-272.png)<!-- -->
+
+    ## cement_co2 - temperature_change_from_ghg: 0.767
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-273.png)<!-- -->
+
+    ## co2 - temperature_change_from_ghg: 0.775
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-274.png)<!-- -->
+
+    ## cumulative_cement_co2 - temperature_change_from_ghg: 0.827
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-275.png)<!-- -->
+
+    ## cumulative_co2 - temperature_change_from_ghg: 0.904
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-276.png)<!-- -->
+
+    ## cumulative_luc_co2 - temperature_change_from_ghg: 0.881
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-277.png)<!-- -->
+
+    ## cumulative_oil_co2 - temperature_change_from_ghg: 0.876
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-278.png)<!-- -->
+
+    ## methane - temperature_change_from_ghg: 0.939
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-279.png)<!-- -->
+
+    ## nitrous_oxide - temperature_change_from_ghg: 0.966
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-280.png)<!-- -->
+
+    ## oil_co2 - temperature_change_from_ghg: 0.906
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-281.png)<!-- -->
+
+    ## share_of_temperature_change_from_ghg - temperature_change_from_ghg: 0.707
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-282.png)<!-- -->
+
+    ## temperature_change_from_ch4 - temperature_change_from_ghg: 0.972
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-283.png)<!-- -->
+
+    ## temperature_change_from_co2 - temperature_change_from_ghg: 0.996
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-284.png)<!-- -->
+
+    ## temperature_change_from_n2o - temperature_change_from_ghg: 0.988
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-285.png)<!-- -->
+
+    ## total_ghg - temperature_change_from_ghg: 0.975
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-286.png)<!-- -->
+
+    ## total_ghg_excluding_lucf - temperature_change_from_ghg: 0.977
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-287.png)<!-- -->
+
+    ## population - temperature_change_from_n2o: 0.807
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-288.png)<!-- -->
+
+    ## cement_co2 - temperature_change_from_n2o: 0.780
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-289.png)<!-- -->
+
+    ## co2 - temperature_change_from_n2o: 0.766
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-290.png)<!-- -->
+
+    ## cumulative_cement_co2 - temperature_change_from_n2o: 0.848
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-291.png)<!-- -->
+
+    ## cumulative_co2 - temperature_change_from_n2o: 0.901
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-292.png)<!-- -->
+
+    ## cumulative_luc_co2 - temperature_change_from_n2o: 0.844
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-293.png)<!-- -->
+
+    ## cumulative_oil_co2 - temperature_change_from_n2o: 0.882
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-294.png)<!-- -->
+
+    ## methane - temperature_change_from_n2o: 0.923
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-295.png)<!-- -->
+
+    ## nitrous_oxide - temperature_change_from_n2o: 0.960
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-296.png)<!-- -->
+
+    ## oil_co2 - temperature_change_from_n2o: 0.895
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-297.png)<!-- -->
+
+    ## temperature_change_from_ch4 - temperature_change_from_n2o: 0.966
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-298.png)<!-- -->
+
+    ## temperature_change_from_co2 - temperature_change_from_n2o: 0.981
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-299.png)<!-- -->
+
+    ## temperature_change_from_ghg - temperature_change_from_n2o: 0.988
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-300.png)<!-- -->
+
+    ## total_ghg - temperature_change_from_n2o: 0.955
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-301.png)<!-- -->
+
+    ## total_ghg_excluding_lucf - temperature_change_from_n2o: 0.963
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-302.png)<!-- -->
+
+    ## population - total_ghg: 0.847
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-303.png)<!-- -->
+
+    ## cement_co2 - total_ghg: 0.812
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-304.png)<!-- -->
+
+    ## co2 - total_ghg: 0.783
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-305.png)<!-- -->
+
+    ## cumulative_cement_co2 - total_ghg: 0.816
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-306.png)<!-- -->
+
+    ## cumulative_co2 - total_ghg: 0.853
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-307.png)<!-- -->
+
+    ## cumulative_luc_co2 - total_ghg: 0.908
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-308.png)<!-- -->
+
+    ## cumulative_oil_co2 - total_ghg: 0.813
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-309.png)<!-- -->
+
+    ## methane - total_ghg: 0.981
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-310.png)<!-- -->
+
+    ## nitrous_oxide - total_ghg: 0.982
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-311.png)<!-- -->
+
+    ## oil_co2 - total_ghg: 0.894
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-312.png)<!-- -->
+
+    ## share_global_cumulative_luc_co2 - total_ghg: 0.711
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-313.png)<!-- -->
+
+    ## share_of_temperature_change_from_ghg - total_ghg: 0.773
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-314.png)<!-- -->
+
+    ## temperature_change_from_ch4 - total_ghg: 0.982
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-315.png)<!-- -->
+
+    ## temperature_change_from_co2 - total_ghg: 0.959
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-316.png)<!-- -->
+
+    ## temperature_change_from_ghg - total_ghg: 0.975
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-317.png)<!-- -->
+
+    ## temperature_change_from_n2o - total_ghg: 0.955
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-318.png)<!-- -->
+
+    ## total_ghg_excluding_lucf - total_ghg: 0.978
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-319.png)<!-- -->
+
+    ## population - total_ghg_excluding_lucf: 0.807
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-320.png)<!-- -->
+
+    ## cement_co2 - total_ghg_excluding_lucf: 0.843
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-321.png)<!-- -->
+
+    ## co2 - total_ghg_excluding_lucf: 0.799
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-322.png)<!-- -->
+
+    ## cumulative_cement_co2 - total_ghg_excluding_lucf: 0.862
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-323.png)<!-- -->
+
+    ## cumulative_co2 - total_ghg_excluding_lucf: 0.889
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-324.png)<!-- -->
+
+    ## cumulative_luc_co2 - total_ghg_excluding_lucf: 0.846
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-325.png)<!-- -->
+
+    ## cumulative_oil_co2 - total_ghg_excluding_lucf: 0.857
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-326.png)<!-- -->
+
+    ## methane - total_ghg_excluding_lucf: 0.933
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-327.png)<!-- -->
+
+    ## nitrous_oxide - total_ghg_excluding_lucf: 0.962
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-328.png)<!-- -->
+
+    ## oil_co2 - total_ghg_excluding_lucf: 0.917
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-329.png)<!-- -->
+
+    ## temperature_change_from_ch4 - total_ghg_excluding_lucf: 0.966
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-330.png)<!-- -->
+
+    ## temperature_change_from_co2 - total_ghg_excluding_lucf: 0.967
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-331.png)<!-- -->
+
+    ## temperature_change_from_ghg - total_ghg_excluding_lucf: 0.977
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-332.png)<!-- -->
+
+    ## temperature_change_from_n2o - total_ghg_excluding_lucf: 0.963
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-333.png)<!-- -->
+
+    ## total_ghg - total_ghg_excluding_lucf: 0.978
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-9-334.png)<!-- -->
+
+Cross Dataset Analysis - Correlation Matrix for investigating how global
+temperatures are affected by CO2 levels
+
+``` r
+#preparing temperature data
+temp_data <- df1_clean %>%
+  select(Year, `Land and Ocean`) %>%
+  rename(year = Year, global_temp = `Land and Ocean`) %>%
+  filter(!is.na(global_temp))
+
+#preparing CO2 data - aggregate global totals by year
+co2_data <- df2_clean %>%
+  group_by(year) %>%
+  summarise(
+    global_co2 = sum(co2, na.rm = TRUE),
+    global_co2_per_capita = mean(co2_per_capita, na.rm = TRUE),
+    global_cumulative_co2 = sum(cumulative_co2, na.rm = TRUE),
+    global_ghg = sum(total_ghg, na.rm = TRUE),
+    global_methane = sum(methane, na.rm = TRUE),
+    global_nitrous_oxide = sum(nitrous_oxide, na.rm = TRUE),
+    avg_temp_change_from_co2 = mean(temperature_change_from_co2, na.rm = TRUE),
+    avg_temp_change_from_ghg = mean(temperature_change_from_ghg, na.rm = TRUE),
+    .groups = 'drop'
+  ) %>%
+  filter(!is.na(global_co2) & global_co2 > 0)
+
+combined_data <- inner_join(temp_data, co2_data, by = "year")
+
+print(paste("Combined dataset has", nrow(combined_data), "years of data"))
+```
+
+    ## [1] "Combined dataset has 136 years of data"
+
+``` r
+print(paste("Year range:", min(combined_data$year), "-", max(combined_data$year)))
+```
+
+    ## [1] "Year range: 1880 - 2015"
+
+``` r
+#calculating correlations
+correlation_vars <- combined_data %>%
+  select(global_temp, global_co2, global_co2_per_capita, global_cumulative_co2, 
+         global_ghg, global_methane, global_nitrous_oxide)
+
+cor_matrix <- cor(correlation_vars, use = "complete.obs")
+col <- colorRampPalette(brewer.pal(9, "Blues"))(200)
+corrplot(cor_matrix, method = "color", col = col,
+  addCoef.col = "white", tl.col = "black", tl.srt = 45, 
+  title = "Temperature vs CO2 Correlations", 
+  mar = c(0,0,3,0), number.cex = 0.8, cl.cex = 0.8, tl.cex = 0.9, 
+  outline = TRUE, addgrid.col = NA)
+```
+
+![](r-notebook_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+Cross Dataset Analysis - Time Series Analysis for investigating how
+global temperatures are affected by CO2 levels
