@@ -4,7 +4,7 @@ output: github_document
 always_allow_html: true
 ---
 
-Loading the libraries requied to analyze the datasets
+Loading the libraries requied to analyze the datasets:
 
 ```{r}
 #loading the required packages
@@ -23,9 +23,11 @@ library(patchwork)
 library(ggcorrplot)
 library(gridExtra)
 library(RColorBrewer)
+library(scales)
+library(grid)
 ```
 
-Loading the datasets
+Loading the datasets:
 
 ```{r}
 #loading datasets
@@ -34,7 +36,7 @@ df2 <- read_csv("owid-co2-data.csv")
 
 ```
 
-Summary of dataset
+Summary of dataset:
 
 ```{r}
 #summary of datasets
@@ -49,7 +51,7 @@ summary(df2)
 cat(strrep("-", 50), "\n")
 ```
 
-Examining Datasets
+Examining Datasets:
 
 ```{r}
 
@@ -69,7 +71,7 @@ cat(strrep("-", 50), "\n")
 
 ```
 
-Checking for Missing Values
+Checking for Missing Values:
 
 ```{r}
 #analysing missing values
@@ -138,7 +140,7 @@ ggplotly(p2, tooltip = "text")
 
 ```
 
-Identifying duplicates and unique values in Data
+Identifying duplicates and unique values in Data:
 
 ```{r}
 cat("Dataset 1 duplicates:", sum(duplicated(df1)), "\n")
@@ -166,7 +168,7 @@ cat(strrep("-", 50), "\n")
 
 ```
 
-Handling Missing Values
+Handling Missing Values:
 
 ```{r}
 handle_missing_values <- function(df, strategy = "auto") {
@@ -214,7 +216,7 @@ cat(strrep("-", 60), "\n")
 
 ```
 
-Univariate Analysis
+Univariate Analysis:
 
 For numeric columns, we will use shapiro.test() to test if the data follows normal distribution.
 Upon calculating the p-value:
@@ -259,7 +261,7 @@ create_univariate_plots(df1_clean, "Dataset 1")
 create_univariate_plots(df2_clean, "Dataset 2")
 ```
 
-Correlation analysis between numeric variables in a dataset
+Correlation analysis between numeric variables in a dataset:
 
 ```{r}
 analyze_correlations <- function(df, dataset_name) {
@@ -310,7 +312,7 @@ cor_matrix1 <- analyze_correlations(df1_clean, "Dataset 1")
 cor_matrix2 <- analyze_correlations(df2_clean, "Dataset 2")
 ```
 
-Cross Dataset Analysis - Correlation Matrix for investigating how global temperatures are affected by CO2 levels
+Cross Dataset Analysis - Correlation Matrix for investigating how global temperatures are affected by CO2 levels:
 
 ```{r}
 #preparing temperature data
@@ -356,4 +358,141 @@ corrplot(cor_matrix, method = "color", col = col,
   outline = TRUE, addgrid.col = NA)
 ```
 
-Cross Dataset Analysis - Time Series Analysis for investigating how global temperatures are affected by CO2 levels
+Cross Dataset Analysis - Time Series Analysis for investigating how global temperatures are affected by CO2 levels:
+
+```{r}
+combined_data_norm <- combined_data %>% 
+  mutate(
+    temp_norm = scale(global_temp)[,1],
+    co2_norm = scale(global_co2)[,1], 
+    cumulative_co2_norm = scale(global_cumulative_co2)[,1]
+  )
+
+#interactive time series plot
+p1 <- plot_ly(combined_data_norm, x = ~year) %>%
+  add_lines(y = ~temp_norm, 
+            name = "Global Temperature", 
+            line = list(color = "#1f77b4", width = 3),
+            hovertemplate = "<b>Global Temperature</b><br>Year: %{x}<br>Z-score: %{y:.3f}<br><extra></extra>") %>%
+  add_lines(y = ~co2_norm, 
+            name = "Annual CO2", 
+            line = list(color = "#ff7f0e", width = 3),
+            hovertemplate = "<b>Annual CO2</b><br>Year: %{x}<br>Z-score: %{y:.3f}<br><extra></extra>") %>%
+  add_lines(y = ~cumulative_co2_norm, 
+            name = "Cumulative CO2", 
+            line = list(color = "#2ca02c", width = 3),
+            hovertemplate = "<b>Cumulative CO2</b><br>Year: %{x}<br>Z-score: %{y:.3f}<br><extra></extra>") %>%
+  layout(
+    title = list(text = "Normalized Trends: Temperature vs CO2 (1960-2020)", 
+                 font = list(size = 16)),
+    xaxis = list(title = "Year"),
+    yaxis = list(title = "Normalized Values (Z-scores)"),
+    legend = list(x = 0, y = -0.15, orientation = "h"),
+    hovermode = "x unified",
+    plot_bgcolor = "white",
+    paper_bgcolor = "white"
+  ) %>%
+  config(displayModeBar = TRUE, 
+         modeBarButtonsToRemove = c("pan2d", "select2d", "lasso2d", "autoScale2d"))
+
+p1
+```
+
+Scatter Plot Analysis:
+
+```{r}
+p2 <- ggplot(combined_data, aes(x = global_co2, y = global_temp)) + 
+  geom_point(aes(color = year), size = 3, alpha = 0.8) + 
+  geom_smooth(method = "lm", se = TRUE, color = "red", size = 1.2, alpha = 0.3) + 
+  scale_color_gradient(low = "darkblue", high = "lightblue", 
+                       name = "Year",
+                       breaks = seq(1880, 2020, 20),
+                       labels = seq(1880, 2020, 20)) +
+  scale_x_continuous(labels = function(x) format(x, big.mark = ",", scientific = FALSE)) +
+  labs(title = "Global Temperature vs Annual CO2 Emissions",
+       x = "Global CO2 Emissions (Million Tonnes)", 
+       y = "Global Temperature Anomaly (°C)") + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 9, face = "bold", hjust = 0.5, margin = margin(b = 20)),
+    axis.title = element_text(size = 7, face = "bold"),
+    axis.text = element_text(size = 6),
+    legend.title = element_text(size = 7, face = "bold"),
+    legend.text = element_text(size = 7),
+    legend.position = "right",
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "gray80", fill = NA, size = 0.5),
+    plot.margin = margin(t = 20, r = 10, b = 20, l = 10)
+  )
+
+p3 <- ggplot(combined_data, aes(x = global_cumulative_co2, y = global_temp)) + 
+  geom_point(aes(color = year), size = 3, alpha = 0.8) + 
+  geom_smooth(method = "lm", se = TRUE, color = "red", size = 1.2, alpha = 0.3) + 
+  scale_color_gradient(low = "darkblue", high = "lightblue", 
+                       name = "Year",
+                       breaks = seq(1880, 2020, 20),
+                       labels = seq(1880, 2020, 20)) +
+  scale_x_continuous(labels = function(x) paste0(round(x/1000, 1), "B")) +
+  labs(title = "Global Temperature vs Cumulative CO2 Emissions",
+       x = "Cumulative CO2 Emissions (Billion Tonnes)", 
+       y = "Global Temperature Anomaly (°C)") + 
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 9, face = "bold", hjust = 0.5, margin = margin(b = 20)),
+    axis.title = element_text(size = 7, face = "bold"),
+    axis.text = element_text(size = 6),
+    legend.title = element_text(size = 7, face = "bold"),
+    legend.text = element_text(size = 7),
+    legend.position = "right",
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "gray80", fill = NA, size = 0.5),
+    plot.margin = margin(t = 20, r = 10, b = 20, l = 10)
+  )
+
+combined_plot <- grid.arrange(p2, p3, ncol = 2)
+
+print(combined_plot)
+```
+Simple Linear Regression Analysis:
+
+The model summaries show the following for each model
+- Coefficients: how much temperature changes per unit of each gas
+- R-squared: how much of temperature variation the model explains
+- P-values: statistical significance
+- Residual standard error: model accuracy
+
+The model comparision table shows the following
+- R-squared: Percentage of temperature variation explained (higher = better)
+- Adjusted R-squared: R-squared adjusted for number of variables (accounts for model complexity)
+- AIC (Akaike Information Criterion): Model quality measure (lower = better, balances fit vs complexity)
+
+```{r}
+model1 <- lm(global_temp ~ global_co2, data = combined_data)
+model2 <- lm(global_temp ~ global_cumulative_co2, data = combined_data)
+model3 <- lm(global_temp ~ global_co2 + global_methane + global_nitrous_oxide, 
+             data = combined_data)
+
+cat("\n=== MODEL 1: Temperature ~ Annual CO2 ===\n")
+print(summary(model1))
+
+cat("\n=== MODEL 2: Temperature ~ Cumulative CO2 ===\n")
+print(summary(model2))
+
+cat("\n=== MODEL 3: Temperature ~ Multiple GHGs ===\n")
+print(summary(model3))
+
+models_comparison <- data.frame(
+  Model = c("Annual CO2", "Cumulative CO2", "Multiple GHGs"),
+  R_squared = c(summary(model1)$r.squared, 
+                summary(model2)$r.squared, 
+                summary(model3)$r.squared),
+  Adjusted_R_squared = c(summary(model1)$adj.r.squared,
+                        summary(model2)$adj.r.squared,
+                        summary(model3)$adj.r.squared),
+  AIC = c(AIC(model1), AIC(model2), AIC(model3))
+)
+
+print("Model Comparison:")
+print(models_comparison)
+```
+
