@@ -496,3 +496,67 @@ print("Model Comparison:")
 print(models_comparison)
 ```
 
+Lag Analysis:
+
+Tests whether past emissions are better predictors than current emissions.
+- From the output of the below code, we see that the climate system does have inertia and the CO2 emissions from previous years can affect the current year temperature.
+
+```{r}
+combined_data_lag <- combined_data %>%
+  arrange(year) %>%
+  mutate(
+    co2_lag1 = lag(global_co2, 1),
+    co2_lag2 = lag(global_co2, 2),
+    co2_lag5 = lag(global_co2, 5),
+    temp_change = global_temp - lag(global_temp, 1)
+  )
+
+lag_correlations <- combined_data_lag %>%
+  select(global_temp, global_co2, co2_lag1, co2_lag2, co2_lag5) %>%
+  cor(use = "complete.obs")
+
+print("Lag Correlations (Temperature with CO2):")
+print(round(lag_correlations[1, ], 3))
+```
+
+Change Rate Analysis:
+
+The output below shows a negative correlation between temperature growth rate and CO2 growth rate.
+The negative correlation suggests that year-to-year emission fluctuations don't directly translate to immediate temperature responses. This is consistent with the lag analysis and climate science studies that:
+- Long-term cumulative CO2 emissions are more influential on temperature trends than short-term annual changes.
+- Averaging data over multiple years is more likely to reveal the expected positive relationship between emissions and temperature.
+- Due to the inertia of the climate system, current temperatures largely reflect the integrated effect of past emissions rather than short-term fluctuations.
+
+```{r}
+combined_data_rates <- combined_data %>%
+  arrange(year) %>%
+  mutate(
+    temp_rate = (global_temp - lag(global_temp, 1)) / 1,
+    co2_rate = (global_co2 - lag(global_co2, 1)) / lag(global_co2, 1) * 100
+  ) %>%
+  filter(!is.na(temp_rate) & !is.na(co2_rate))
+
+rate_correlation <- cor(combined_data_rates$temp_rate, 
+                       combined_data_rates$co2_rate, use = "complete.obs")
+
+cat(paste("\nCorrelation between temperature change rate and CO2 growth rate:", 
+          round(rate_correlation, 3)))
+
+p4 <- ggplot(combined_data_rates, aes(x = co2_rate, y = temp_rate)) +
+  geom_point(aes(color = year), size = 3, alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(title = "Temperature Change Rate vs CO2 Growth Rate",
+       x = "CO2 Growth Rate (%)",
+       y = "Temperature Change Rate (°C/year)",
+       color = "Year") +
+  theme_minimal()
+
+print(p4)
+```
+
+Interactive Plots:
+
+```{r}
+
+```
+
