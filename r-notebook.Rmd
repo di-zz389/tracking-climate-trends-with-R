@@ -4,6 +4,20 @@ output: github_document
 always_allow_html: true
 ---
 
+all_my_packages <- c(
+  "tidyverse", "corrplot", "VIM", "Hmisc", "psych",
+  "plotly", "GGally", "mice", "patchwork",
+  "ggcorrplot", "gridExtra", "RColorBrewer", "scales"
+)
+
+missing <- all_my_packages[
+  !(all_my_packages %in% installed.packages()[, "Package"])
+]
+
+if(length(missing) > 0) {
+  install.packages(missing, dependencies = TRUE)
+}
+
 Loading the libraries requied to analyze the datasets:
 
 ```{r}
